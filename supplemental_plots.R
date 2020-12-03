@@ -1,12 +1,3 @@
-# set working directory to where files are stored using the "rstudioapi" package
-
-# Getting the path of this script
-current_path = rstudioapi::getActiveDocumentContext()$path 
-
-# setting it as working directory 
-setwd(dirname(current_path ))
-
-
 # loading packages
 library(tidyverse) # for visualization
 library(here) # for clean file storage
@@ -89,9 +80,11 @@ origination_phyla <- ggplot(metrics) +
   scale_x_reverse(limits = c(480, 0)) +
   coord_geo(size = 2.5, height = unit(0.75, "lines"), alpha = 2/3) +
   labs(x = "age [myr]", y = "Per-capita origination rate") +
-  facet_wrap( ~ phylum, scales = "free_x", ncol = 2) +
+  facet_wrap( ~ phylum, scales = "free", ncol = 2) +
   my_theme +
-  theme(strip.text.x = element_text(size = 14, family = "sans"))
+  theme(strip.text.x = element_text(size = 14, family = "sans"), 
+        panel.grid.major.y = element_blank(), 
+        panel.grid.minor.x = element_blank())
 
 # save it
 ggsave(plot = origination_phyla, file=here("figures/per_capita_ori_rate.png"), 
@@ -105,9 +98,11 @@ diversity_phyla <- ggplot(metrics) +
   scale_x_reverse(limits = c(480, 0)) +
   coord_geo(size = 2.5, height = unit(0.75, "lines"), alpha = 2/3) +
   labs(x = "age [myr]", y = "Corrected sampled-in-bin diversity") +
-  facet_wrap( ~ phylum, scales = "free_x", ncol = 2) +
+  facet_wrap( ~ phylum, scales = "free", ncol = 2) +
   my_theme +
-  theme(strip.text.x = element_text(size = 14, family = "sans"))
+  theme(strip.text.x = element_text(size = 14, family = "sans"), 
+        panel.grid.major.y = element_blank(), 
+        panel.grid.minor.x = element_blank())
 
 # save it
 ggsave(plot = diversity_phyla, file=here("figures/corrected_sib_diversity.png"), 
