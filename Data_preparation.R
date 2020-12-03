@@ -1,12 +1,3 @@
-# set working directory to where files are stored using the "rstudioapi" package
-
-# Getting the path of this script
-current_path = rstudioapi::getActiveDocumentContext()$path 
-
-# setting it as working directory 
-setwd(dirname(current_path ))
-
-
 # download libraries
 library(chronosphere)
 library(divDyn)
@@ -23,7 +14,7 @@ library(here)
 pbdb <- fetch(dat="pbdb")
 
 # save it as a R-file
-# save(pbdb, file=here("data/allData_2020-01-26.RData"))
+# save(pbdb, file=here("data/allData_2020-12-03.RData"))
 
 # load(file=here("data/allData_2020-01-26.RData"))
 
@@ -332,7 +323,8 @@ rownames(dat_safe) <-  make.names(dumbo[,"genus"], unique=TRUE)
 
 
 # Reorganise ranges through time data so we can bind it to temperature data
-dat_safe %<>%  as_tibble() %>%
+dat_safe <- dat_safe %>%
+  as_tibble() %>%
   mutate(genus = rownames(dat_safe)) %>%
   group_by(genus) %>%
   gather(-genus, key="bins", value="origination", na.rm = T, factor_key = T) %>%
@@ -406,7 +398,8 @@ dat_temp <- dat_temp %>%
 dat_final <- full_join(dat_temp, isotemp2)
 
 # remove reduntant columns
-dat_final <- dat_final[, -c(21:22)]
+dat_final <- dat_final %>% 
+  select(-Stage, -n)
 
 # save it to your working directory
 save(dat_final, file = here("data/final_data.RData"))

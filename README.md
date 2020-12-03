@@ -1,3 +1,7 @@
 # Paleoclimate Interaction Origination
 
-This the R project to the second (potential) publication for PastKey covering paleoclimate interactions and origination probability. 
+This the R project to the second (potential) publication for PastKey covering paleoclimate interactions and origination probability.  
+  
+# Order of scripts  
+  
+1. Data_preparation.R
