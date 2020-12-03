@@ -414,10 +414,10 @@ BAYES_SEED <- 1234
 options(mc.cores = parallel::detectCores())  # Use all cores
 
 # # specify the distribution of origination probability
-mean(prob$ori.prob) # 0.124
-sd(prob$ori.prob) # 0.0353
-min(prob$ori.prob) # 0.029
-max(prob$ori.prob) # 0.288
+mean(prob$ori.prob) # 0.125
+sd(prob$ori.prob) # 0.034
+min(prob$ori.prob) # 0.040
+max(prob$ori.prob) # 0.278
 
 
 # run the model usin brm and rcpp
@@ -456,7 +456,7 @@ brms_best_post <- posterior_samples(brms_best) %>%
 # we can use tidyMCMC from broom to calculate the difference and 
 # create confidence intervals
 brms_best_tidy <- 
-  broom::tidyMCMC(brms_best_post, conf.int = TRUE, conf.level = 0.95, 
+  broom::tidy(brms_best_post, conf.int = TRUE, conf.level = 0.95, 
            estimate.method = "median", conf.method = "HPDinterval") 
 
 
@@ -464,13 +464,13 @@ brms_best_tidy <-
 
 # Extract simulation results
 boot_results <- tibble(estimate = diff_prob$stat,
-                           conf.low = boot_confint$`2.5%`,
-                           conf.high = boot_confint$`97.5%`)
+                           conf.low = boot_confint$lower_ci,
+                           conf.high = boot_confint$upper_ci)
 
 # Extract bayesian best results
 best_results <- brms_best_tidy %>% 
-  filter(term == "diff_means") %>% 
-  select(estimate, conf.low, conf.high)
+  filter(column == "diff_means") %>% 
+  select(estimate = mean, conf.low = min, conf.high = max)
 
 # combine
 diff_in_means <- 
@@ -546,7 +546,9 @@ mean_diff <- ggplot(diff_in_means, aes(x = estimate, y = method)) +
   labs(y = NULL, x = "Difference in means") +
   my_theme +
   theme(panel.grid.major.x=element_line(colour = "grey", linetype = "dotted"), 
-        panel.grid.major.y = element_blank(), legend.position = "none") +
+        panel.grid.major.y = element_blank(), 
+        legend.position = "none", 
+        panel.grid.minor.x = element_blank()) +
   scale_y_discrete(labels = c("Bayesian estimation", "Bootstrapping")) +
   scale_fill_manual(values = my_colours[2:3])
 
@@ -559,8 +561,10 @@ perc_change <- ggplot(percent_change, aes(x = estimate, y = method)) +
              shape = 21, stroke = 1) +
   labs(y = NULL, x = "Percentage change") +
   my_theme +
-  theme(panel.grid.major.x=element_line(colour = "grey", linetype = "dotted"), 
-        panel.grid.major.y = element_blank(), legend.position = "none") +
+  theme(panel.grid.major.x = element_line(colour = "grey", linetype = "dotted"), 
+        panel.grid.major.y = element_blank(), 
+        legend.position = "none", 
+        panel.grid.minor.x = element_blank()) +
   scale_y_discrete(labels = c("Bayesian estimation", "Bootstrapping")) + 
   scale_x_continuous(labels = function(x) paste0(x, '%')) +
   scale_fill_manual(values = my_colours[2:3])
@@ -575,7 +579,9 @@ cohens_d <- ggplot(effect_size, aes(x = estimate, y = method)) +
   labs(y = NULL, x = "Effect size (Cohen's d)") +
   my_theme +
   theme(panel.grid.major.x=element_line(colour = "grey", linetype = "dotted"), 
-        panel.grid.major.y = element_blank(), legend.position = "none") +
+        panel.grid.major.y = element_blank(), 
+        legend.position = "none",
+        panel.grid.minor.x = element_blank()) +
   scale_y_discrete(labels = c("Bayesian estimation", "Raw data")) +
   scale_fill_manual(values = my_colours[2:1])
 
@@ -586,6 +592,6 @@ combined_effect_size <- mean_diff / perc_change / cohens_d +
 
 # save it
 ggsave(plot = combined_effect_size, filename = here("figures/combined_effect_sizes.png"), 
-       width = 9, height = 9, units = "cm")
+       width = 11, height = 11, units = "cm")
 
 
