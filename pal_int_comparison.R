@@ -1,12 +1,3 @@
-# set working directory to where files are stored using the "rstudioapi" package
-
-# Getting the path of this script
-current_path = rstudioapi::getActiveDocumentContext()$path 
-
-# setting it as working directory 
-setwd(dirname(current_path ))
-
-
 # loading packages
 library(tidyverse) # for visualization
 library(lme4) # for GLMM's
@@ -206,15 +197,16 @@ av <- (prob_cool + prob_warm)/2
 # define theme
 my_theme <- theme(panel.background = element_rect(fill = "white", colour = "grey50"),
                   panel.grid.major.y=element_line(colour = "grey", linetype = "dotted"),
-                  text = element_text(family = "sans"))
+                  text = element_text(family = "sans"), 
+                  panel.grid.major.x = element_blank())
 
 # produce a violin plot
 # black line shows overall mean
 violin <- ggplot(prob, aes(x=pal.int, y=ori.prob, fill=pal.int)) + 
   geom_hline(yintercept = av)+
   geom_violin() +
-  scale_fill_manual(values=c("#354E71", "#354E71","#841F27", "#841F27"))+
-  scale_y_continuous(name="Origination Probability", limits=c(0, 0.3), 
+  scale_fill_manual(values = c("#354E71", "#354E71","#841F27", "#841F27"))+
+  scale_y_continuous(name = "Origination Probability", limits=c(0, 0.3), 
                      breaks = seq(0, 0.3, by= 0.05), 
                      labels = scales::percent_format(accuracy = 1)) +
   xlab(NULL) +
@@ -229,7 +221,7 @@ violin <- ggplot(prob, aes(x=pal.int, y=ori.prob, fill=pal.int)) +
   scale_colour_manual(values=c("#841F27", "#354E71")) +
   # add grey lines to visualise means per group 
   stat_summary(fun = mean, fun.min = mean, fun.max = mean,
-               geom = "crossbar", width = c(0.74, 0.4, 0.84, 0.52), 
+               geom = "crossbar", width = c(0.7, 0.37, 0.58, 0.52), 
                colour = "grey60") +
   # add outer layer
   geom_violin(fill = NA) +
@@ -239,8 +231,8 @@ violin <- ggplot(prob, aes(x=pal.int, y=ori.prob, fill=pal.int)) +
            curvature = -.325, arrow = arrow(length = unit(2.5, "mm")), 
            colour = "grey40") +
   annotate(geom = "curve", x = 1.05, y = 0.055, # per group
-           xend = 0.58, yend = 0.145, 
-           curvature = -.55, arrow = arrow(length = unit(2.5, "mm")), 
+           xend = 0.58, yend = 0.146, 
+           curvature = -.7, arrow = arrow(length = unit(2.5, "mm")), 
            colour = "grey40") +
   # add lines
   annotate(geom = "segment", x = c(4, 1.05), y = c(0.22, 0.055), # overall
@@ -255,7 +247,7 @@ violin <- ggplot(prob, aes(x=pal.int, y=ori.prob, fill=pal.int)) +
            colour = "grey30", label = c("Mean", "per", "group"), size = 3.5) +
   # add stars for significance
   annotate("text", x = c("CC", "CW", "WC", "WW"), 
-           y = c(0.27, 0.295, 0.165, 0.19), colour = "grey20",
+           y = c(0.27, 0.283, 0.172, 0.185), colour = "grey20",
            label= c("***", "***", "***", "***")) +
   scale_x_discrete(labels = c("Cooling-Cooling", "Cooling-Warming", 
                               "Warming-Cooling", "Warming-Warming"), 
@@ -265,6 +257,8 @@ violin <- ggplot(prob, aes(x=pal.int, y=ori.prob, fill=pal.int)) +
 ggsave(plot = violin, filename = here("figures/violin_plot.png"), 
        width = 12.7, height = 9, units = "cm")
 
+ggsave(plot = violin, filename = here("figures/violin_plot.pdf"), 
+       width = 12.7, height = 9, units = "cm", dpi = 500)
 
 
 
