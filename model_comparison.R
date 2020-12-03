@@ -1,18 +1,8 @@
-# set working directory to where files are stored using the "rstudioapi" package
-
-# Getting the path of this script
-current_path = rstudioapi::getActiveDocumentContext()$path 
-
-# setting it as working directory 
-setwd(dirname(current_path ))
-
-
 # loading packages
 library(tidyverse) # for cleaning and visualization
 library(lme4) # for GLMM's
 library(geiger) # for AICw
 library(here) # for project tidying
-library(ggalt) # for geom_dumbbell
 
 
 # Functions ---------------------------------------------------------------
@@ -312,9 +302,9 @@ summarise_model(Temp.lag.int.cool.PI)
 
 # # combine all (final) models in a list and save it as RData. Make sure that you 
 # use the glmms and not the function output from final model, they have the same names.
-# final_models <- list(Temp.warm, Temp.warm.PI, 
-#      Temp.cool, Temp.cool.PI, 
-#      Temp.lag.warm, Temp.lag.warm.PI, 
+# final_models <- list(Temp.warm, Temp.warm.PI,
+#      Temp.cool, Temp.cool.PI,
+#      Temp.lag.warm, Temp.lag.warm.PI,
 #      Temp.lag.cool, Temp.lag.cool.PI,
 #      Temp.lag.int.warm, Temp.lag.int.warm.PI,
 #      Temp.lag.int.cool, Temp.lag.int.cool.PI)
@@ -357,39 +347,45 @@ tidy_comparison_long <- model_comparison %>%
 
 
 model_comparison <- ggplot(tidy_comparison, aes(x=meandAIC_PI, xend=meandAIC_TR, y=type)) + 
-  geom_point(data = tidy_comparison_long, aes(meandAIC_TR, colour = traditional), 
-             size = 3) +
-  geom_dumbbell(colour= c("#354E71", "#841F27"),
-                size = 1.5, size_x=4, size_xend = 4,
-                colour_x="grey60", # dark points = models with paleoclimate interaction
-                colour_xend = "grey20") + # light points = traditional models
-  theme(panel.background = element_rect(fill = "white", colour = "grey50"),
-        panel.grid.major.x=element_line(colour = "grey", linetype = "dotted"),
-        text = element_text(family = "sans"), legend.position = c(0.575, 0.917), 
-        legend.background = element_blank(),
-        legend.box.background = element_rect(colour = "grey50"), 
-        legend.key = element_blank(), 
-        legend.box.margin = margin(-6,-3,-2,-5), 
-        legend.spacing.x = unit(0, units = "mm")) +
-  xlim(600,0) +
+  geom_segment(aes(yend = type), colour = c("#354E71", "#841F27"),  size = 1, show.legend = FALSE) +
+  geom_point(data = tidy_comparison_long, aes(meandAIC_TR, fill = traditional), 
+             shape = 21, colour = "grey40", stroke = 0.3, size = 3) +
+  scale_fill_manual(name = NULL, 
+                     values = c("grey20", "grey60"),
+                     labels = c("Palaeoclimate\nInteraction added", "Traditional Model")) +
+  guides(fill = guide_legend(nrow = 1, reverse = TRUE, override.aes = list(size = c(2, 2)))) +
+  xlim(700,0) +
   labs(x = expression(paste("Mean ",Delta, "AIC")), y = NULL) +
-  scale_color_manual(name = NULL, values = c("grey20", "grey60"), 
-                     labels = c("Traditional Model", "Palaeoclimate\nInteraction added")) +
-  guides(colour = guide_legend(nrow = 1)) +
   scale_y_discrete(labels = c("Cooling", "Warming")) +
   # add annotations
   # box
   annotate(geom = "rect", xmin = 480, xmax = 190, 
-           ymin = 0.435, ymax = 0.55, fill = "white") +
+           ymin = 0.41, ymax = 0.6, fill = "white") +
   # text
   annotate(geom = "text", x = 350, y = 0.5,
-           colour = "grey30", label = "increasing model performance", size = 3.2) +
+           colour = "grey30", label = "increasing model performance", size = 2.5) +
   # arrow
-  annotate(geom = "segment", x = 135, y = 0.49,  
-           xend = 50, yend = 0.49, arrow = arrow(length = unit(2.5, "mm")), 
-           colour = "grey40") 
+  annotate(geom = "segment", x = 150, y = 0.49,  
+           xend = 90, yend = 0.49, arrow = arrow(length = unit(2.5, "mm")), 
+           colour = "grey40") +
+  theme(panel.background = element_rect(fill = "white", colour = "grey50"),
+        panel.grid.major.x = element_line(colour = "grey", linetype = "dotted"),
+        panel.grid.major.y = element_blank(), 
+        panel.grid.minor = element_blank(), 
+        text = element_text(family = "sans"), 
+        legend.position = c(0.3, 0.9), 
+        legend.background = element_blank(),
+        legend.box.background = element_rect(fill = "white", colour = "grey50"), 
+        legend.key = element_blank(), 
+        legend.box.margin = margin(-8,-4,-5,-6), 
+        legend.spacing.x = unit(0, units = "mm"), 
+        legend.title = element_text(size = 5), 
+        legend.text=element_text(size = 5)) 
 
 
 # save it
 ggsave(plot = model_comparison, here("figures/model_comparison.png"),
-       width = 9, height = 7, units = "cm")
+       width = 9, height = 6, units = "cm")
+
+ggsave(plot = model_comparison, here("figures/model_comparison.pdf"),
+       width = 9, height = 6, units = "cm", dpi = 500)
