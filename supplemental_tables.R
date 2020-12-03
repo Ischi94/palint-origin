@@ -1,11 +1,3 @@
-# set working directory to where files are stored using the "rstudioapi" package
-
-# Getting the path of this script
-current_path = rstudioapi::getActiveDocumentContext()$path 
-
-# setting it as working directory 
-setwd(dirname(current_path ))
-
 # load libraries
 library(tidyverse) # for data processing
 library(here) # for project tidyness
@@ -140,8 +132,8 @@ warming <- pal_int_models[[1]]
 cooling <- pal_int_models[[2]]
 
 # produce model summaries
-warming_tidy <- warming %>% broom::tidy()
-cooling_tidy <- cooling %>% broom::tidy()
+warming_tidy <- warming %>% broom.mixed::tidy()
+cooling_tidy <- cooling %>% broom.mixed::tidy()
 
 model_tidy <- warming_tidy %>% full_join(cooling_tidy)
 
