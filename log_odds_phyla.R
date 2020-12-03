@@ -1,12 +1,3 @@
-# set working directory to where files are stored using the "rstudioapi" package
-
-# Getting the path of this script
-current_path = rstudioapi::getActiveDocumentContext()$path 
-
-# setting it as working directory 
-setwd(dirname(current_path ))
-
-
 # loading packages
 library(tidyverse) # for visualization
 library(here) # for project tidiness
@@ -243,15 +234,17 @@ forest_plot <-  ggplot(log_odds, aes(x = estimate, y = name)) +
   geom_linerange(aes(xmin = lower_CI, xmax = upper_CI)) +
   geom_hline(yintercept = 15.5, colour = "grey50") +
   geom_hline(yintercept = 10.5, colour = "grey50") +
-  annotate(geom = "segment", x = 2.08, xend = 2.08, y = 0, yend = 16, 
+  annotate(geom = "segment", x = 1.64, xend = 1.64, y = 0, yend = 16, 
            size = 2.5, colour = "darkred", alpha = 0.2) +
   geom_linerange(aes(xmin = lower_CI, xmax = upper_CI),
                  size = 1, colour = "grey45") +
-  geom_point(aes(fill = type), size = 3, shape = 21, stroke = 1, colour = "grey25" ) +
+  geom_point(aes(fill = type), size = 2, shape = 21, stroke = 0.5, colour = "grey25" ) +
   theme(panel.background = element_rect(fill = "white", colour = "grey50"),
         panel.grid.major.x=element_line(colour = "grey", linetype = "dotted"),
         text = element_text(family = "sans"), 
-        legend.position = "none") + 
+        legend.position = "none", 
+        panel.grid.major.y = element_blank(), 
+        panel.grid.minor.x = element_blank()) + 
   labs(x= "Log Odds ratio \n (Origination | Cooling-Cooling)", y = NULL)+
   scale_x_continuous(breaks = seq(1, 7, by = 1)) +
   # add annotations
@@ -262,12 +255,15 @@ forest_plot <-  ggplot(log_odds, aes(x = estimate, y = name)) +
   annotate(geom = "text", x = 4.2, y = 16.15,
            colour = "grey30", label = "increasing likelihood", size = 3) +
   # arrow
-  annotate(geom = "segment", x = 5.15, y = 16.1,  
+  annotate(geom = "segment", x = 5.25, y = 16.1,  
            xend = 5.7, yend = 16.1, arrow = arrow(length = unit(2.5, "mm")), 
            colour = "grey40") +
-  coord_cartesian(xlim = c(0.8,7.05)) +
+  coord_cartesian(xlim = c(0.5, 7)) +
   scale_fill_manual(values = c("grey40", "#d5a069", "indianred"))
 
-
+# save plot
 ggsave(plot = forest_plot, filename = here("figures/Log_Odds.png"), 
        width = 12.7, height = 9, units = "cm")
+
+ggsave(plot = forest_plot, filename = here("figures/Log_Odds.pdf"), 
+       width = 12.7, height = 9, units = "cm", dpi = 500)
