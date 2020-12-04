@@ -389,3 +389,66 @@ ggsave(plot = model_comparison, here("figures/model_comparison.png"),
 
 ggsave(plot = model_comparison, here("figures/model_comparison.pdf"),
        width = 9, height = 6, units = "cm", dpi = 500)
+
+
+# per model comparison
+model_comparison_grouped <- model_comparison %>% 
+  # add group colum
+  select(models, type, aic = AIC) %>% 
+  # add group colum
+  add_column(group_dummy = rep(c("Temp", "Temp+Lag", "Temp+Lag+Int"), each = 4)) %>%
+  unite("models", c(group_dummy, type), remove = FALSE) %>% 
+  mutate(with_pi = lead(aic)) %>%
+  filter(row_number() %% 2 == 1) %>% 
+  select(models, type, traditional = aic, with_pi) %>% 
+  pivot_longer(cols = c(traditional, with_pi), values_to = "aic", names_to = "aic_type") %>% 
+  mutate(dummy_col = rep(c(1, 1.5, 2, 2.5, 3, 3.5), each = 2)) %>% 
+  ggplot(aes(aic, dummy_col)) +
+  geom_point(aes(group = type, fill = aic_type), 
+             shape = 21, colour = "grey40", size = 3, stroke = 0.4) +
+  geom_line(aes(group = models, colour = type), size = 0.8) +
+  geom_hline(yintercept = c(1.75, 2.75), colour = "grey") +
+  scale_fill_manual(values = c("grey60", "grey20"), 
+                    name = "Model", 
+                    labels = c("Traditional", "Palaeoclimate\nInteraction")) +
+  scale_color_manual(values = c("#354E71", "#841F27"), name = "Short-term\nChange") +
+  scale_y_continuous(breaks = c(1.25, 2.25, 3.25), 
+                     labels = c("Temperature", "Temperature\n+\nLag", "Temperature\n+\nLag\n+\nInteraction")) +
+  labs(y = NULL, x = "AIC") +
+  # add annotations
+  # box
+  annotate(geom = "rect", xmin = 18000, xmax = 19500, 
+           ymin = 3.4, ymax = 3.5, fill = "white") +
+  # text
+  annotate(geom = "text", x = 19150, y = 3.457,
+           colour = "grey30", label = "increasing model performance", size = 3.5) +
+  # arrow
+  annotate(geom = "segment", x = 18550, y = 3.457,  
+           xend = 18200, yend = 3.457, arrow = arrow(length = unit(2.5, "mm")), 
+           colour = "grey40") +
+  # box
+  annotate(geom = "rect", xmin = 19700, xmax = 19550, 
+           ymin = 1.9, ymax = 3.4, fill = "white") +
+  # text
+  annotate(geom = "text", x = 19650, y = 2.9, angle = 270, 
+           colour = "grey30", label = "decreasing model complexity", size = 3.5) +
+  # arrow
+  annotate(geom = "segment", x = 19650, y = 2.38,  
+           xend = 19650, yend = 2.15, arrow = arrow(length = unit(2.5, "mm")), 
+           colour = "grey40") +
+  theme(panel.background = element_rect(fill = "white", colour = "grey50"),
+        panel.grid.major.x = element_line(colour = "grey", linetype = "dotted"),
+        panel.grid.major.y = element_blank(), 
+        panel.grid.minor = element_blank(), 
+        text = element_text(family = "sans"), 
+        legend.position = c(0.8, 0.7), 
+        legend.background = element_blank(),
+        legend.box.background = element_rect(fill = "white", colour = "grey50"),
+        legend.key = element_blank(),
+        legend.title = element_text(size = 10), 
+        legend.text = element_text(size = 8)
+  )
+  
+
+# save it
+ggsave(plot = model_comparison_grouped, here("figures/model_comparison_grouped.png"))
