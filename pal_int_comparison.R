@@ -445,7 +445,7 @@ brms_best <- brm(
 brms_best_post <- posterior_samples(brms_best) %>% 
   # Rescale sigmas (sigma terms are on a log scale, 
   # so we need to exponentiate them back to the scale of the data)
-  mutate_at(vars(contains("sigma")), funs(exp)) %>% 
+  mutate_at(vars(contains("sigma")), exp) %>% 
   # we need to log nu
   mutate(nu = log10(nu)) %>% 
   # calculate differences
@@ -594,4 +594,5 @@ combined_effect_size <- mean_diff / perc_change / cohens_d +
 ggsave(plot = combined_effect_size, filename = here("figures/combined_effect_sizes.png"), 
        width = 11, height = 11, units = "cm")
 
-
+ggsave(plot = combined_effect_size, filename = here("figures/combined_effect_sizes.pdf"), 
+       width = 11, height = 11, units = "cm", dpi = 500)
