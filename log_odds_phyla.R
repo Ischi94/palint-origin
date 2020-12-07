@@ -131,15 +131,20 @@ cooling_sum <- summary(cooling_pal_int)
 
 # Per phyla ---------------------------------------------------------------
 
+# get phyla names
+phyl_names <- dat_final %>% 
+  distinct(phylum) %>%
+  drop_na() %>% 
+  # remove hemichordata and nematoda due to few data
+  filter(phylum != "Hemichordata" & phylum != "Nematoda") %>% 
+  pull() %>% 
+  sort()
 
 # build dataframe
-log_odds <- tibble(name = c("Total", "Annelida", "Arthropoda", 
-                              "Brachiopoda", "Bryozoa", "Chordata", 
-                              "Cnidaria", "Echinodermata", "Hemichordata", 
-                              "Mollusca", "Porifera", "Stage 14:29", "Stage 30:45", 
+log_odds <- tibble(name = c("Total", phyl_names, "Stage 14:29", "Stage 30:45", 
                             "Stage 46:61", "Stage 62:77", "Stage 78:94"),
-                     lower_CI = numeric(16), estimate = numeric(16), 
-                   upper_CI = numeric(16))
+                     lower_CI = numeric(length(name)), estimate = numeric(length(name)), 
+                   upper_CI = numeric(length(name)))
 
 
 # calculate log odds that taxa have higher origination rates after cooling-cooling
@@ -178,9 +183,9 @@ log_odds[7, 2:4] <- Cnidaria
 Echinodermata <- interaction_log_odds("Echinodermata")
 log_odds[8, 2:4] <- Echinodermata
 
-# Hemichordata
-Hemichordata <- interaction_log_odds("Hemichordata")
-log_odds[9, 2:4] <- Hemichordata
+# Foraminifera
+Foraminifera <- interaction_log_odds("Foraminifera")
+log_odds[9, 2:4] <- Foraminifera
 
 # Mollusca
 Mollusca <- interaction_log_odds("Mollusca")
@@ -196,7 +201,11 @@ log_odds[11, 2:4] <- Porifera
 # Through time ------------------------------------------------------------
 
 # take equaly spaced sequences through time
-age_seq <- dat_final %>% as_tibble() %>% distinct(bins) %>% arrange(bins) %>% pull(bins)
+age_seq <- dat_final %>% 
+  as_tibble() %>% 
+  distinct(bins) %>% 
+  arrange(bins) %>% 
+  pull(bins)
 
 # Tremadocian to Lochkovian
 trem_loch <- interaction_log_odds(all_phyla, age_seq[1:16])
@@ -230,10 +239,14 @@ log_odds <- log_odds %>% add_column(type = c("total", rep("phyla", 10), rep("sta
 
 #plot it
 ###forest plot
-forest_plot <-  ggplot(log_odds, aes(x = estimate, y = name)) +
+forest_plot <- log_odds %>% 
+  # reorder labels
+  mutate(name = as_factor(name)) %>% 
+  mutate(name = fct_reorder(name, desc(name))) %>% 
+  ggplot(aes(x = estimate, y = name)) +
   geom_linerange(aes(xmin = lower_CI, xmax = upper_CI)) +
   geom_hline(yintercept = 15.5, colour = "grey50") +
-  geom_hline(yintercept = 10.5, colour = "grey50") +
+  geom_hline(yintercept = 5.5, colour = "grey50") +
   annotate(geom = "segment", x = 1.64, xend = 1.64, y = 0, yend = 16, 
            size = 2.5, colour = "darkred", alpha = 0.2) +
   geom_linerange(aes(xmin = lower_CI, xmax = upper_CI),
@@ -246,20 +259,22 @@ forest_plot <-  ggplot(log_odds, aes(x = estimate, y = name)) +
         panel.grid.major.y = element_blank(), 
         panel.grid.minor.x = element_blank()) + 
   labs(x= "Log Odds ratio \n (Origination | Cooling-Cooling)", y = NULL)+
-  scale_x_continuous(breaks = seq(1, 7, by = 1)) +
+  scale_x_continuous(breaks = seq(0, 4, by = 1)) +
   # add annotations
   # box
-  annotate(geom = "rect", xmin = 3.2, xmax = 5.2, 
-           ymin = 15.65, ymax = 16.5, fill = "white") +
+  annotate(geom = "rect", xmin = -0.1, xmax = 1.15, 
+           ymin = - 0.6, ymax = 0.4, fill = "white") +
   # text
-  annotate(geom = "text", x = 4.2, y = 16.15,
-           colour = "grey30", label = "increasing likelihood", size = 3) +
+  annotate(geom = "text", x = 0.4, y = -0.1,
+           colour = "grey30", label = "increasing likelihood", size = 2.5) +
   # arrow
-  annotate(geom = "segment", x = 5.25, y = 16.1,  
-           xend = 5.7, yend = 16.1, arrow = arrow(length = unit(2.5, "mm")), 
-           colour = "grey40") +
-  coord_cartesian(xlim = c(0.5, 7)) +
+  annotate(geom = "segment", x = 0.95, y = -0.1,  
+           xend = 1.2, yend = -0.1, arrow = arrow(length = unit(2, "mm")), 
+           colour = "grey40", size = 0.35) +
+  coord_cartesian(xlim = c(0, 4), ylim = c(-0.05, 16)) +
   scale_fill_manual(values = c("grey40", "#d5a069", "indianred"))
+
+forest_plot
 
 # save plot
 ggsave(plot = forest_plot, filename = here("figures/Log_Odds.png"), 
