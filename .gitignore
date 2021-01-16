@@ -2,5 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
-data/final_models.RData
+data/*_models.RData
 data/allData_*
