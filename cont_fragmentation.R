@@ -222,9 +222,9 @@ prob_fragm_sum <- prob_fragm %>%
 
 # define theme
 my_theme <- theme(panel.background = element_rect(fill = "white", colour = "grey50"),
-                  panel.grid.major.y=element_line(colour = "grey", linetype = "dotted"),
+                  panel.grid.major.x=element_line(colour = "grey", linetype = "dotted"),
                   text = element_text(family = "sans"), 
-                  panel.grid.major.x = element_blank())
+                  panel.grid.major.y = element_blank())
 
 
 
@@ -235,6 +235,10 @@ ggplot(prob_fragm_sum) +
   geom_vline(xintercept = av) +
   geom_pointrange(aes(x = mean, xmin = lwr, xmax = upr,
                       y = fragm.int, 
-                      colour = fragm.int)) +
-  my_theme
+                      colour = fragm.int), size = 0.7) +
+  coord_cartesian(xlim = c(0.115, 0.141)) +
+  theme_bw() +
+  theme(panel.grid.major.x = element_line(colour = "grey", linetype = "dotted"),
+        panel.grid.minor.x = element_blank(), 
+        panel.grid.major.y = element_blank())
 
