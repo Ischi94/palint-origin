@@ -195,3 +195,86 @@ long_term <- function(i, j) {
   } else NA
 }
 ###
+
+
+### 
+# take a model and produce a Data frame (tibble for nicer printing) with model output
+# and AIC, BIC, deltaAIC, AICweights and deltaBIC
+model_df <- function(my_model) {
+  # make data frame for model output
+  df <-
+    tibble(
+      model = names(dplyr::select(dat_final, trend.st1:trend.st10)),
+      intercept = character(10),
+      interaction = character(10),
+      AIC = numeric(10),
+      BIC = numeric(10)
+    )
+  # Run loop to fill interaction_warm (coefficients and p-values)
+  for (i in df$model) {
+    sum <- summary(my_model[[i]])
+    df[df$model == i, "intercept"] <-
+      paste(
+        round(sum$coefficients[1, 1], 2),
+        sep = " ",
+        "+-",
+        round(sum$coefficients[1, 2], 2),
+        ifelse(
+          sum$coefficients[1, 4] < 0.001,
+          "***",
+          ifelse(
+            sum$coefficients[1, 4] < 0.01,
+            "**",
+            ifelse(sum$coefficients[1, 4] < 0.05, "*", "")
+          )
+        )
+      )
+    df[df$model == i, "interaction"] <-
+      paste(
+        round(sum$coefficients[2, 1], 2),
+        sep = " ",
+        "+-",
+        round(sum$coefficients[2, 2], 2),
+        ifelse(
+          sum$coefficients[2, 4] < 0.001,
+          "***",
+          ifelse(
+            sum$coefficients[2, 4] < 0.01,
+            "**",
+            ifelse(sum$coefficients[2, 4] < 0.05, "*", "")
+          )
+        )
+      )
+    df[df$model == i, "AIC"] <- as.numeric(round(sum$AICtab[[1]], 1))
+    df[df$model == i, "BIC"] <- as.numeric(round(sum$AICtab[[2]], 1))
+  }
+  
+  # Add column weith AIC weights and deltaBIC
+  df$dAIC <- as.numeric(round(aicw(df$AIC)$delta, 1))
+  df$AICweights <- as.numeric(signif(aicw(df$AIC)$w, 3))
+  df$dBIC <- as.numeric(round(aicw(df$BIC)$delta, 1))
+  df
+}
+###
+
+###
+# take the predictions for a palaeoclimate interaction and produce a ggplot to
+# (visually) check for normality
+my_qqplot <- function(PI, title) {
+  ggpubr::ggqqplot(prob$ori.prob[prob$pal.int == PI], title = title, ggtheme = my_theme)
+}
+###
+
+###
+# take the predictions and test whether they significantly are above or below the
+# baseline. This is a one sided Wilcoxon rank sum test 
+# (equivalent to the Mann-Whitney test)
+my_wilcoxtest <- function(PI, alternative) {
+  wilcox.test(prob$ori.prob[prob$pal.int == PI],
+              overall,
+              paired = FALSE,
+              alternative = alternative)
+}
+###
+
+###
