@@ -166,49 +166,58 @@ sum_decr_interaction <- summary(decr_interaction_final)
 # make informed predictions based on a subset (palaeoclimate interaction)
 # type = response gives us probability instead of log Odds
 
-#  warming warming
-ww_raw <- subset(dat_final, trend.st7 >=0 & warming >= 0)
-ww_pred <- predict(warm_interaction_final, newdata = ww_raw,
+#  increase increase
+ww_raw <- subset(dat_final_frag, trend.st7 >=0 & increase >= 0)
+ww_pred <- predict(incr_interaction_final, newdata = ww_raw,
                    type = "response")
 
-#  cooling warming
-cw_raw <- subset(dat_final, trend.st7 <=0 & warming >= 0)
-cw_pred <- predict(warm_interaction_final, newdata = cw_raw,
+#  decrease increase
+cw_raw <- subset(dat_final_frag, trend.st7 <=0 & increase >= 0)
+cw_pred <- predict(incr_interaction_final, newdata = cw_raw,
                    type = "response")
 
-#  warming cooling 
-wc_raw <- subset(dat_final, trend.st6 >=0 & cooling <= 0)
-wc_pred <- predict(cool_interaction_final, newdata = wc_raw,
+#  increase decrease 
+wc_raw <- subset(dat_final_frag, trend.st6 >=0 & decrease <= 0)
+wc_pred <- predict(decr_interaction_final, newdata = wc_raw,
                    type = "response")
 
-#  cooling cooling 
-cc_raw <- subset(dat_final, trend.st6 <=0 & cooling <= 0)
-cc_pred <- predict(cool_interaction_final, newdata = cc_raw,
+#  decrease decrease 
+cc_raw <- subset(dat_final_frag, trend.st6 <=0 & decrease <= 0)
+cc_pred <- predict(decr_interaction_final, newdata = cc_raw,
                    type = "response")
 
 # make a dataframe with the output
-prob <- tibble(ori.prob = c(cc_pred, wc_pred, cw_pred,ww_pred), 
-               pal.int = c(rep("CC", length(cc_pred)),
-                           rep("WC", length(wc_pred)),
-                           rep("CW", length(cw_pred)),
-                           rep("WW", length(ww_pred))))
+prob_fragm <- tibble(ori.prob = c(cc_pred, wc_pred, cw_pred,ww_pred), 
+               fragm.int = c(rep("DD", length(cc_pred)),
+                           rep("ID", length(wc_pred)),
+                           rep("DI", length(cw_pred)),
+                           rep("II", length(ww_pred))))
 
 # save it
-# save(prob, file = here("data/violin_plot_data.RData"))
+# save(prob_fragm, file = here("data/fragmentation_plot_data.RData"))
 
 # the predictions are now in percentage (probability), but the intercept, to which we 
 # want to compare our predictions with, is still in log Odds.
 # transform logit intercept into probability
-# for warm
-odds <- exp(sum_warm_interaction$coefficients[1])
-prob_warm <- odds / (1 + odds)
+# for increase
+odds <- exp(sum_incr_interaction$coefficients[1])
+prob_incr <- odds / (1 + odds)
 
-# for cool
-odds <- exp(sum_cool_interaction$coefficients[1])
-prob_cool <- odds / (1 + odds)
+# for decrease
+odds <- exp(sum_decr_interaction$coefficients[1])
+prob_decr <- odds / (1 + odds)
+
 
 # mean
-av <- (prob_cool + prob_warm)/2
+av <- mean(c(prob_incr, prob_decr))
+
+
+# calculate summaries
+prob_fragm_sum <- prob_fragm %>% 
+  group_by(fragm.int) %>% 
+  summarise(ci = list(mean_cl_boot(ori.prob) %>% 
+                        rename(mean=y, lwr=ymin, upr=ymax))) %>% 
+  unnest(cols = c(ci)) 
 
 
 # define theme
@@ -216,3 +225,16 @@ my_theme <- theme(panel.background = element_rect(fill = "white", colour = "grey
                   panel.grid.major.y=element_line(colour = "grey", linetype = "dotted"),
                   text = element_text(family = "sans"), 
                   panel.grid.major.x = element_blank())
+
+
+
+
+# plot data ---------------------------------------------------------------
+
+ggplot(prob_fragm_sum) +
+  geom_vline(xintercept = av) +
+  geom_pointrange(aes(x = mean, xmin = lwr, xmax = upr,
+                      y = fragm.int, 
+                      colour = fragm.int)) +
+  my_theme
+
