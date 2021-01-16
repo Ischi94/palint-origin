@@ -2,6 +2,8 @@
 library(tidyverse) # for visualization
 library(here) # for project tidiness
 
+# load self-defined functions 
+source("functions.R")
 
 # Data --------------------------------------------------------------------
 

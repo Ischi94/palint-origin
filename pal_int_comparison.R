@@ -7,7 +7,8 @@ library(patchwork) # for combining of plots
 library(infer) # for bootstrapping
 library(brms) # for Stan-based models with standard R syntax (Bayesian Regression)
 
-
+# load self-defined functions 
+source("functions.R")
 
 # Calculate GLMM's ----------------------------------------------------------------
 

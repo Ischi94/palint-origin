@@ -3,6 +3,9 @@ library(chronosphere)
 library(divDyn)
 library(here)
 
+# load self-defined functions 
+source("functions.R")
+
 # select is conflicted, define to use dplyr's select
 select <- dplyr::select
 

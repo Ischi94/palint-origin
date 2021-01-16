@@ -4,7 +4,8 @@ library(divDyn)
 library(tidyverse)
 library(here)
 
-
+# load self-defined functions 
+source("functions.R")
 
 # 1 Download pbdb data from chronosphere ----------------------------------
 

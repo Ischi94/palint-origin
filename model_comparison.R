@@ -4,6 +4,8 @@ library(lme4) # for GLMM's
 library(geiger) # for AICw
 library(here) # for project tidying
 
+# load self-defined functions 
+source("functions.R")
 
 # Analysis ----------------------------------------------------------------
 
