@@ -1,7 +1,9 @@
 library(tidyverse)
 library(chronosphere)
 library(divDyn)
+library(here)
 
+# select is conflicted, define to use dplyr's select
 select <- dplyr::select
 
 # load zaffos fragmentation index
@@ -46,40 +48,12 @@ zaffos_binned2 <- zaffos_binned %>%
   # add dummy column 
   add_column(change.prev = double(length = length(unique(zaffos_binned$stg))))
 
-# set up function to calculate a regression between two rows/ stages
-short_term <- function(i, j) {
-  dum1 <- filter(zaffos_binned2,
-                 zaffos_binned2$stg %in% zaffos_binned2$stg[between(zaffos_binned2$stg, i-j, i)])
-  
-  dum2 <-  dum1 %>% 
-    unnest(fragmentation_index) %>% 
-    lm(formula = fragmentation_index ~ stg)
-  
-  -dum2$coefficients[2]
-}
 
 # calculate short-term change in fragmentation index
 zaffos_binned2 <- zaffos_binned2 %>% 
   select(-data) %>% 
   mutate(change.prev = map_dbl(unique(zaffos_binned2$stg), short_term, j = 1))
 
-
-# Use lm() to determine slope of the long-term fragmentation trends
-# If we want to investigate the interaction between long term change and short term,
-# we need to exclude the short term bin from the long term, and thus shift the long 
-# term lm result up by i-1.
-long_term <- function(i, j) {
-  dum1 <- filter(zaffos_binned2,
-                 zaffos_binned2$stg %in% zaffos_binned2$stg[between(zaffos_binned2$stg, i-j, i-1)])
-  
-  if(nrow(dum1) != 0) {
-    dum2 <-  dum1 %>% 
-    unnest(fragmentation_index) %>% 
-    lm(formula = fragmentation_index ~ stg)
-  
-  -dum2$coefficients[2]
-  } else NA
-}
 
 # now move gradually back in time for each trend
 zaffos_trends <- zaffos_binned2 %>% 
@@ -95,4 +69,15 @@ zaffos_trends <- zaffos_binned2 %>%
     trend.st10 = map_dbl(unique(zaffos_binned2$stg), long_term, j = 11)) 
 
 
+# load origination data
+load(here("data/final_data.RData"))
 
+# remove temperature trends and add fragmentation index trends to the origination data
+dat_final_frag <- dat_final %>% 
+  as_tibble() %>% 
+  select(phylum:origination, stg = bins) %>% 
+  mutate(stg = as.numeric(stg)) %>% 
+  left_join(zaffos_trends)
+
+# save data
+# save(dat_final_frag, file = here("data/final_fragmentation_data.RData"))
