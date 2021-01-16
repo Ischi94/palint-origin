@@ -46,104 +46,53 @@ zaffos_binned2 <- zaffos_binned %>%
   # add dummy column 
   add_column(change.prev = double(length = length(unique(zaffos_binned$stg))))
 
-for (i in unique(zaffos_binned2$stg)) {
+# set up function to calculate a regression between two rows/ stages
+short_term <- function(i, j) {
   dum1 <- filter(zaffos_binned2,
-                 zaffos_binned2$stg %in% zaffos_binned2$stg[between(zaffos_binned2$stg, i-1, i)])
+                 zaffos_binned2$stg %in% zaffos_binned2$stg[between(zaffos_binned2$stg, i-j, i)])
   
   dum2 <-  dum1 %>% 
     unnest(fragmentation_index) %>% 
     lm(formula = fragmentation_index ~ stg)
   
-  zaffos_binned2[zaffos_binned2$stg==i, "change.prev"] <- -dum2$coefficients[2]
+  -dum2$coefficients[2]
 }
 
-# Calculate lags 1 to 10
-zaffos_binned <- zaffos_binned2 %>%  
+# calculate short-term change in fragmentation index
+zaffos_binned2 <- zaffos_binned2 %>% 
   select(-data) %>% 
-  mutate(lag1 = lag(fragmentation_index, order_by = stg), 
-         lag2 = lag(lag1, order_by = stg),
-         lag3 = lag(lag2, order_by = stg),
-         lag4 = lag(lag3, order_by = stg),
-         lag5 = lag(lag4, order_by = stg),
-         lag6 = lag(lag5, order_by = stg),
-         lag7 = lag(lag6, order_by = stg),
-         lag8 = lag(lag7, order_by = stg),
-         lag9 = lag(lag8, order_by = stg),
-         lag10 = lag(lag9, order_by = stg)) 
+  mutate(change.prev = map_dbl(unique(zaffos_binned2$stg), short_term, j = 1))
+
 
 # Use lm() to determine slope of the long-term fragmentation trends
 # If we want to investigate the interaction between long term change and short term,
 # we need to exclude the short term bin from the long term, and thus shift the long 
-# term lm result up by +1.
-for (i in unique(zaffos_binned$stg)) {
-  sub1 <- filter(zaffos_binned2,
-                 zaffos_binned2$stg %in% zaffos_binned2$stg[between(zaffos_binned2$stg, i-1, i)])
+# term lm result up by i-1.
+long_term <- function(i, j) {
+  dum1 <- filter(zaffos_binned2,
+                 zaffos_binned2$stg %in% zaffos_binned2$stg[between(zaffos_binned2$stg, i-j, i-1)])
   
-  lin1 <- lm(Temp ~ age, data = sub1)
-  isotemp2[isotemp2$Stage == i + 1, "trend.st1"] <-
-    -lin1$coefficients[2]
+  if(nrow(dum1) != 0) {
+    dum2 <-  dum1 %>% 
+    unnest(fragmentation_index) %>% 
+    lm(formula = fragmentation_index ~ stg)
   
-  sub2 <-
-    filter(isotemp, isotemp$Stage %in% isotemp$Stage[between(isotemp$Stage, i -
-                                                               2, i)])
-  lin2 <- lm(Temp ~ age, data = sub2)
-  isotemp2[isotemp2$Stage == i + 1, "trend.st2"] <-
-    -lin2$coefficients[2]
-  
-  sub3 <-
-    filter(isotemp, isotemp$Stage %in% isotemp$Stage[between(isotemp$Stage, i -
-                                                               3, i)])
-  lin3 <- lm(Temp ~ age, data = sub3)
-  isotemp2[isotemp2$Stage == i + 1, "trend.st3"] <-
-    -lin3$coefficients[2]
-  
-  sub4 <-
-    filter(isotemp, isotemp$Stage %in% isotemp$Stage[between(isotemp$Stage, i -
-                                                               4, i)])
-  lin4 <- lm(Temp ~ age, data = sub4)
-  isotemp2[isotemp2$Stage == i + 1, "trend.st4"] <-
-    -lin4$coefficients[2]
-  
-  sub5 <-
-    filter(isotemp, isotemp$Stage %in% isotemp$Stage[between(isotemp$Stage, i -
-                                                               5, i)])
-  lin5 <- lm(Temp ~ age, data = sub5)
-  isotemp2[isotemp2$Stage == i + 1, "trend.st5"] <-
-    -lin5$coefficients[2]
-  
-  sub6 <-
-    filter(isotemp, isotemp$Stage %in% isotemp$Stage[between(isotemp$Stage, i -
-                                                               6, i)])
-  lin6 <- lm(Temp ~ age, data = sub6)
-  isotemp2[isotemp2$Stage == i + 1, "trend.st6"] <-
-    -lin6$coefficients[2]
-  
-  sub7 <-
-    filter(isotemp, isotemp$Stage %in% isotemp$Stage[between(isotemp$Stage, i -
-                                                               7, i)])
-  lin7 <- lm(Temp ~ age, data = sub7)
-  isotemp2[isotemp2$Stage == i + 1, "trend.st7"] <-
-    -lin7$coefficients[2]
-  
-  sub8 <-
-    filter(isotemp, isotemp$Stage %in% isotemp$Stage[between(isotemp$Stage, i -
-                                                               8, i)])
-  lin8 <- lm(Temp ~ age, data = sub8)
-  isotemp2[isotemp2$Stage == i + 1, "trend.st8"] <-
-    -lin8$coefficients[2]
-  
-  sub9 <-
-    filter(isotemp, isotemp$Stage %in% isotemp$Stage[between(isotemp$Stage, i -
-                                                               9, i)])
-  lin9 <- lm(Temp ~ age, data = sub9)
-  isotemp2[isotemp2$Stage == i + 1, "trend.st9"] <-
-    -lin9$coefficients[2]
-  
-  sub10 <-
-    filter(isotemp, isotemp$Stage %in% isotemp$Stage[between(isotemp$Stage, i -
-                                                               10, i)])
-  lin10 <- lm(Temp ~ age, data = sub10)
-  isotemp2[isotemp2$Stage == i + 1, "trend.st10"] <-
-    -lin10$coefficients[2]
+  -dum2$coefficients[2]
+  } else NA
 }
+
+# now move gradually back in time for each trend
+zaffos_trends <- zaffos_binned2 %>% 
+  mutate(trend.st1 = map_dbl(unique(zaffos_binned2$stg), long_term, j = 2),
+    trend.st2 = map_dbl(unique(zaffos_binned2$stg), long_term, j = 3), 
+    trend.st3 = map_dbl(unique(zaffos_binned2$stg), long_term, j = 4),
+    trend.st4 = map_dbl(unique(zaffos_binned2$stg), long_term, j = 5), 
+    trend.st5 = map_dbl(unique(zaffos_binned2$stg), long_term, j = 6), 
+    trend.st6 = map_dbl(unique(zaffos_binned2$stg), long_term, j = 7), 
+    trend.st7 = map_dbl(unique(zaffos_binned2$stg), long_term, j = 8), 
+    trend.st8 = map_dbl(unique(zaffos_binned2$stg), long_term, j = 9), 
+    trend.st9 = map_dbl(unique(zaffos_binned2$stg), long_term, j = 10), 
+    trend.st10 = map_dbl(unique(zaffos_binned2$stg), long_term, j = 11)) 
+
+
 
