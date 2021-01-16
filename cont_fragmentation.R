@@ -2,12 +2,17 @@ library(tidyverse)
 library(chronosphere)
 library(divDyn)
 library(here)
+library(lme4)
+library(geiger) 
+
+# select is conflicted, define to use dplyr's select
+select <- dplyr::select
 
 # load self-defined functions 
 source("functions.R")
 
-# select is conflicted, define to use dplyr's select
-select <- dplyr::select
+
+# load data ---------------------------------------------------------------
 
 # load zaffos fragmentation index
 zaffos <- fetch(dat = "som", var = "zaffos-fragment") %>% 
@@ -16,6 +21,15 @@ zaffos <- fetch(dat = "som", var = "zaffos-fragment") %>%
 
 # load stage data for binning
 data(stages)
+
+
+# load origination data
+load(here("data/final_data.RData"))
+
+
+
+# bin fragmentation index -------------------------------------------------
+
 
 # build stage data which contains the same million year id as staffos for binning
 stages_seq <- stages %>% 
@@ -72,8 +86,10 @@ zaffos_trends <- zaffos_binned2 %>%
     trend.st10 = map_dbl(unique(zaffos_binned2$stg), long_term, j = 11)) 
 
 
-# load origination data
-load(here("data/final_data.RData"))
+
+# combine data ------------------------------------------------------------
+
+
 
 # remove temperature trends and add fragmentation index trends to the origination data
 dat_final_frag <- dat_final %>% 
@@ -84,3 +100,119 @@ dat_final_frag <- dat_final %>%
 
 # save data
 # save(dat_final_frag, file = here("data/final_fragmentation_data.RData"))
+
+
+# Calculate GLMM's ----------------------------------------------------------------
+
+# Split short term fragmentation change into decrease and increase, 
+# to calculate the results for each:
+dat_final_frag <- dat_final_frag %>% 
+  mutate(decrease = if_else(change.prev < 0, change.prev, NA_real_), 
+         increase = if_else(change.prev > 0, change.prev, NA_real_))
+
+# for increase
+# model taking  both short-term and long-term fragmentation at each stage into account/ 
+# Iterate through each increase
+vars = names(dplyr::select(dat_final_frag, trend.st1:trend.st10)) 
+incr_interaction = lapply(setNames(vars, vars), function(var) {
+  form = paste("origination~increase:", var, "+(1|genus)")
+  glmer(form, 
+        data = dat_final_frag, 
+        family = "binomial",
+        nAGQ = 25)
+})
+
+
+# Make data frame for model output
+incr_interaction_df <- model_df(incr_interaction)
+
+# choose final model
+incr_interaction_final <- incr_interaction[[which(incr_interaction_df$dAIC==0)]]
+
+# summary
+sum_incr_interaction <- summary(incr_interaction_final) 
+
+# for decrease
+# model taking  both short-term and long-term fragmentation at each stage into account/ 
+# Iterate through each decrease
+decr_interaction = lapply(setNames(vars, vars), function(var) {
+  form = paste("origination~decrease:", var, "+(1|genus)")
+  glmer(form, 
+        data = dat_final_frag, 
+        family = "binomial", 
+        nAGQ= 25)
+})
+
+
+# Make data frame for model output
+decr_interaction_df <- model_df(decr_interaction)
+
+# choose final model
+decr_interaction_final <- decr_interaction[[which(decr_interaction_df$dAIC==0)]]
+
+# summary
+sum_decr_interaction <- summary(decr_interaction_final) 
+
+
+# save it as a list
+# fragm_int_df <- list(incr_interaction_df, decr_interaction_df)
+# save(fragm_int_df, file = here("data/fragm_int_df.RData"))
+# fragm_int_models <- list(incr_interaction_final, decr_interaction_final)
+# save(fragm_int_models, file = here("data/fragm_int_models.RData"))
+
+
+# Make predictions based on GLMM's ----------------------------------------
+
+# make informed predictions based on a subset (palaeoclimate interaction)
+# type = response gives us probability instead of log Odds
+
+#  warming warming
+ww_raw <- subset(dat_final, trend.st7 >=0 & warming >= 0)
+ww_pred <- predict(warm_interaction_final, newdata = ww_raw,
+                   type = "response")
+
+#  cooling warming
+cw_raw <- subset(dat_final, trend.st7 <=0 & warming >= 0)
+cw_pred <- predict(warm_interaction_final, newdata = cw_raw,
+                   type = "response")
+
+#  warming cooling 
+wc_raw <- subset(dat_final, trend.st6 >=0 & cooling <= 0)
+wc_pred <- predict(cool_interaction_final, newdata = wc_raw,
+                   type = "response")
+
+#  cooling cooling 
+cc_raw <- subset(dat_final, trend.st6 <=0 & cooling <= 0)
+cc_pred <- predict(cool_interaction_final, newdata = cc_raw,
+                   type = "response")
+
+# make a dataframe with the output
+prob <- tibble(ori.prob = c(cc_pred, wc_pred, cw_pred,ww_pred), 
+               pal.int = c(rep("CC", length(cc_pred)),
+                           rep("WC", length(wc_pred)),
+                           rep("CW", length(cw_pred)),
+                           rep("WW", length(ww_pred))))
+
+# save it
+# save(prob, file = here("data/violin_plot_data.RData"))
+
+# the predictions are now in percentage (probability), but the intercept, to which we 
+# want to compare our predictions with, is still in log Odds.
+# transform logit intercept into probability
+# for warm
+odds <- exp(sum_warm_interaction$coefficients[1])
+prob_warm <- odds / (1 + odds)
+
+# for cool
+odds <- exp(sum_cool_interaction$coefficients[1])
+prob_cool <- odds / (1 + odds)
+
+# mean
+av <- (prob_cool + prob_warm)/2
+
+
+# define theme
+my_theme <- theme(panel.background = element_rect(fill = "white", colour = "grey50"),
+                  panel.grid.major.y=element_line(colour = "grey", linetype = "dotted"),
+                  text = element_text(family = "sans"), 
+                  panel.grid.major.x = element_blank())
