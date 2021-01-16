@@ -5,67 +5,6 @@ library(geiger) # for AICw
 library(here) # for project tidying
 
 
-# Functions ---------------------------------------------------------------
-
-###
-# testing whether a model is overdispersed
-overdisp_fun <- function(model) {
-  ## number of variance parameters in an n-by-n variance-covariance matrix
-  vpars <- function(m) {
-    nrow(m) * (nrow(m) + 1)/2
-  }
-  # The next two lines calculate the residual degrees of freedom
-  model.df <- sum(sapply(VarCorr(model), vpars)) + length(fixef(model))
-  rdf <- nrow(model.frame(model)) - model.df
-  # extracts the Pearson residuals
-  rp <- residuals(model, type = "pearson")
-  Pearson.chisq <- sum(rp^2)
-  prat <- Pearson.chisq/rdf
-  # Generates a p-value. If less than 0.05, the data are overdispersed.
-  pval <- pchisq(Pearson.chisq, df = rdf, lower.tail = FALSE)
-  c(chisq = Pearson.chisq, ratio = prat, rdf = rdf, p = pval)
-}
-###
-
-###
-# function for adding AIC, BIC and overdispersion to a predefined data frame. 
-summarise_model <- function(model){
-  # convert to character for subsetting
-  model_chr <- deparse(substitute(model))
-  # summary
-  sum <- summary(model) 
-  # AIC
-  model_comparison$AIC[model_comparison$models == model_chr] <<- 
-    as.numeric(round(sum$AICtab[[1]], 1)) 
-  # BIC
-  model_comparison$BIC[model_comparison$models == model_chr] <<- 
-    as.numeric(round(sum$AICtab[[2]], 1)) 
-  # test for overdispersion
-  model_comparison$overdispersed[model_comparison$models == model_chr] <<- 
-    ifelse(overdisp_fun(model)[4]< 0.05, "yes", "no") 
-  filter(model_comparison, models == model_chr)
-}
-###
-
-###
-# function for selecting the best model from a list with paleoclimate interactions 
-select_model <- function(model){
-  # model summary for each model in the list
-  model_sum <- map(model, summary)
-  # get the AIC values for each model, substitute with BIC in the second call to get 
-  # BIC values
-  model_sum_aic <- map(model_sum, "AICtab")
-  model_sum_aic <- map(model_sum_aic, "AIC")
-  # change the list to a vector and select the model with the lowest AIC value
-  best_model <- model_sum_aic %>% unlist() %>% 
-    enframe() %>% 
-    filter(value == min(value))
-  # choose final model
-  model[[best_model[[1]]]]
-}
-###
-
-
 # Analysis ----------------------------------------------------------------
 
 
