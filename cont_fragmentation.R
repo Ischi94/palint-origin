@@ -94,7 +94,7 @@ dat_final_frag <- dat_final %>%
   as_tibble() %>% 
   select(phylum:origination, stg = bins) %>% 
   mutate(stg = as.numeric(stg)) %>% 
-  left_join(zaffos_trends)
+  left_join(zaffos_trends) 
 
 # save data
 # save(dat_final_frag, file = here("data/final_fragmentation_data.RData"))
@@ -107,6 +107,7 @@ dat_final_frag <- dat_final %>%
 dat_final_frag <- dat_final_frag %>% 
   mutate(decrease = if_else(change.prev < 0, change.prev, NA_real_), 
          increase = if_else(change.prev > 0, change.prev, NA_real_))
+
 
 # for increase
 # model taking  both short-term and long-term fragmentation at each stage into account/ 
@@ -164,23 +165,41 @@ sum_decr_interaction <- summary(decr_interaction_final)
 # make informed predictions based on a subset (palaeoclimate interaction)
 # type = response gives us probability instead of log Odds
 
+# get the best performing trend
+trend_incr <- sum_incr_interaction$coefficients %>% 
+  as_tibble(rownames = "estimate") %>% 
+  mutate(trend = str_split(estimate, pattern = ":")) %>% 
+  unnest(trend) %>% 
+  filter(trend %in% paste0("trend.st", 1:10)) %>% 
+  pull(trend) %>% 
+  sym()
+
+trend_decr <- sum_decr_interaction$coefficients %>% 
+  as_tibble(rownames = "estimate") %>% 
+  mutate(trend = str_split(estimate, pattern = ":")) %>% 
+  unnest(trend) %>% 
+  filter(trend %in% paste0("trend.st", 1:10)) %>% 
+  pull(trend) %>% 
+  sym()
+
+
 #  increase increase
-ww_raw <- subset(dat_final_frag, trend.st7 >=0 & increase >= 0)
+ww_raw <- filter(dat_final_frag, !!trend_incr >=0 & increase >= 0)
 ww_pred <- predict(incr_interaction_final, newdata = ww_raw,
                    type = "response")
 
 #  decrease increase
-cw_raw <- subset(dat_final_frag, trend.st7 <=0 & increase >= 0)
+cw_raw <- filter(dat_final_frag, !!trend_incr <=0 & increase >= 0)
 cw_pred <- predict(incr_interaction_final, newdata = cw_raw,
                    type = "response")
 
 #  increase decrease 
-wc_raw <- subset(dat_final_frag, trend.st6 >=0 & decrease <= 0)
+wc_raw <- filter(dat_final_frag, !!trend_incr >=0 & decrease <= 0)
 wc_pred <- predict(decr_interaction_final, newdata = wc_raw,
                    type = "response")
 
 #  decrease decrease 
-cc_raw <- subset(dat_final_frag, trend.st6 <=0 & decrease <= 0)
+cc_raw <- filter(dat_final_frag, !!trend_incr <=0 & decrease <= 0)
 cc_pred <- predict(decr_interaction_final, newdata = cc_raw,
                    type = "response")
 
@@ -222,11 +241,11 @@ prob_fragm_sum <- prob_fragm %>%
 
 # plot data ---------------------------------------------------------------
 
-cont_fragm_plot <- ggplot(aes(x = mean, y = fragm.int), data = prob_fragm_sum) +
+cont_fragm_plot <-  ggplot(aes(x = mean, y = fragm.int), data = prob_fragm_sum) +
   geom_vline(xintercept = av, colour = "grey5") +
   geom_linerange(aes(xmin = lwr, xmax = upr), size = 1.5, colour = "grey50") +
   geom_point(shape = 21, size = 3, fill = "grey50", colour = "grey10") +
-  coord_cartesian(xlim = c(0.115, 0.141)) +
+  # coord_cartesian(xlim = c(0.115, 0.141)) +
   labs(x = "Origination probability", y = NULL) +
   scale_x_continuous(labels = function(x) paste0(x*100, '%')) +
   annotate(geom = "curve", x = 0.1326, y = 1.25,
@@ -237,7 +256,7 @@ cont_fragm_plot <- ggplot(aes(x = mean, y = fragm.int), data = prob_fragm_sum) +
            xend = 0.1326, yend = 1.58, colour = "grey30", size = 0.4) +
   annotate(geom = "rect", xmin = 0.126, xmax = 0.1323,
            ymin = 1.225, ymax = 1.66, fill = "white") +
-  annotate(geom = "text", x = 0.1307, y = c(1.51, 1.32),
+  annotate(geom = "text", x = 0.13, y = c(1.51, 1.32),
            colour = "grey30", label = c("Overall", "mean"), size = 3) +
   theme_bw() +
   theme(panel.grid.major.x = element_line(colour = "grey", linetype = "dotted"),
