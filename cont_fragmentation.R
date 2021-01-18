@@ -61,12 +61,9 @@ zaffos_binned2 <- zaffos_binned %>%
   nest() %>%
   # apply function to each column
   mutate(fragmentation_index = map(data, "fragmentation_index")) %>% 
-  ungroup() 
-
-
-# calculate short-term change in fragmentation index
-zaffos_binned2 <- zaffos_binned2 %>% 
+  ungroup() %>% 
   select(-data) %>% 
+  # calculate short-term change in fragmentation index
   mutate(change.prev = map_dbl(unique(zaffos_binned2$stg), short_term, j = 1))
 
 
@@ -184,31 +181,31 @@ trend_decr <- sum_decr_interaction$coefficients %>%
 
 
 #  increase increase
-ww_raw <- filter(dat_final_frag, !!trend_incr >=0 & increase >= 0)
-ww_pred <- predict(incr_interaction_final, newdata = ww_raw,
+ii_raw <- filter(dat_final_frag, !!trend_incr >=0 & increase >= 0)
+ii_pred <- predict(incr_interaction_final, newdata = ii_raw,
                    type = "response")
 
 #  decrease increase
-cw_raw <- filter(dat_final_frag, !!trend_incr <=0 & increase >= 0)
-cw_pred <- predict(incr_interaction_final, newdata = cw_raw,
+di_raw <- filter(dat_final_frag, !!trend_incr <=0 & increase >= 0)
+di_pred <- predict(incr_interaction_final, newdata = di_raw,
                    type = "response")
 
 #  increase decrease 
-wc_raw <- filter(dat_final_frag, !!trend_incr >=0 & decrease <= 0)
-wc_pred <- predict(decr_interaction_final, newdata = wc_raw,
+id_raw <- filter(dat_final_frag, !!trend_incr >=0 & decrease <= 0)
+id_pred <- predict(decr_interaction_final, newdata = id_raw,
                    type = "response")
 
 #  decrease decrease 
-cc_raw <- filter(dat_final_frag, !!trend_incr <=0 & decrease <= 0)
-cc_pred <- predict(decr_interaction_final, newdata = cc_raw,
+dd_raw <- filter(dat_final_frag, !!trend_incr <=0 & decrease <= 0)
+dd_pred <- predict(decr_interaction_final, newdata = dd_raw,
                    type = "response")
 
 # make a dataframe with the output
-prob_fragm <- tibble(ori.prob = c(cc_pred, wc_pred, cw_pred,ww_pred), 
-               fragm.int = c(rep("Decrease-Decrease", length(cc_pred)),
-                           rep("Increase-Decrease", length(wc_pred)),
-                           rep("Decrease-Increase", length(cw_pred)),
-                           rep("Increase-Increase", length(ww_pred))))
+prob_fragm <- tibble(ori.prob = c(dd_pred, id_pred, di_pred,ii_pred), 
+               fragm.int = c(rep("Decrease-Decrease", length(dd_pred)),
+                           rep("Increase-Decrease", length(id_pred)),
+                           rep("Decrease-Increase", length(di_pred)),
+                           rep("Increase-Increase", length(ii_pred))))
 
 # save it
 # save(prob_fragm, file = here("data/fragmentation_plot_data.RData"))
