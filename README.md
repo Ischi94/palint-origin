@@ -8,5 +8,6 @@ This the R project to the second (potential) publication for PastKey covering pa
 2. model_comparison.R  
 3. pal_int_comparison.R  
 4. log_odds_phyla.R  
+5. cont_fragmentation.R
 5. supplemental_plots.R  
 6. supplemental_tables.R  
