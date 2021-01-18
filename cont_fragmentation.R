@@ -188,10 +188,10 @@ cc_pred <- predict(decr_interaction_final, newdata = cc_raw,
 
 # make a dataframe with the output
 prob_fragm <- tibble(ori.prob = c(cc_pred, wc_pred, cw_pred,ww_pred), 
-               fragm.int = c(rep("DD", length(cc_pred)),
-                           rep("ID", length(wc_pred)),
-                           rep("DI", length(cw_pred)),
-                           rep("II", length(ww_pred))))
+               fragm.int = c(rep("Decrease-Decrease", length(cc_pred)),
+                           rep("Increase-Decrease", length(wc_pred)),
+                           rep("Decrease-Increase", length(cw_pred)),
+                           rep("Increase-Increase", length(ww_pred))))
 
 # save it
 # save(prob_fragm, file = here("data/fragmentation_plot_data.RData"))
@@ -210,7 +210,7 @@ prob_decr <- odds / (1 + odds)
 
 # mean
 av <- mean(c(prob_incr, prob_decr))
-
+# 0.134989
 
 # calculate summaries
 prob_fragm_sum <- prob_fragm %>% 
@@ -220,25 +220,34 @@ prob_fragm_sum <- prob_fragm %>%
   unnest(cols = c(ci)) 
 
 
-# define theme
-my_theme <- theme(panel.background = element_rect(fill = "white", colour = "grey50"),
-                  panel.grid.major.x=element_line(colour = "grey", linetype = "dotted"),
-                  text = element_text(family = "sans"), 
-                  panel.grid.major.y = element_blank())
-
-
 
 
 # plot data ---------------------------------------------------------------
 
-ggplot(prob_fragm_sum) +
-  geom_vline(xintercept = av) +
-  geom_pointrange(aes(x = mean, xmin = lwr, xmax = upr,
-                      y = fragm.int, 
-                      colour = fragm.int), size = 0.7) +
+cont_fragm_plot <- ggplot(aes(x = mean, y = fragm.int), data = prob_fragm_sum) +
+  geom_vline(xintercept = av, colour = "grey5") +
+  geom_linerange(aes(xmin = lwr, xmax = upr), size = 1.5, colour = "grey50") +
+  geom_point(shape = 21, size = 3, fill = "grey50", colour = "grey10") +
   coord_cartesian(xlim = c(0.115, 0.141)) +
+  labs(x = "Origination probability", y = NULL) +
+  scale_x_continuous(labels = function(x) paste0(x*100, '%')) +
+  annotate(geom = "curve", x = 0.1326, y = 1.25,
+           xend = 0.1347, yend = 1.54, 
+           curvature = -.35, arrow = arrow(length = unit(1.5, "mm")), 
+           colour = "grey30", size = 0.4) +
+  annotate(geom = "segment", x = 0.1326, y = 1.25,
+           xend = 0.1326, yend = 1.58, colour = "grey30", size = 0.4) +
+  annotate(geom = "rect", xmin = 0.126, xmax = 0.1323,
+           ymin = 1.225, ymax = 1.66, fill = "white") +
+  annotate(geom = "text", x = 0.1307, y = c(1.51, 1.32),
+           colour = "grey30", label = c("Overall", "mean"), size = 3) +
   theme_bw() +
   theme(panel.grid.major.x = element_line(colour = "grey", linetype = "dotted"),
         panel.grid.minor.x = element_blank(), 
         panel.grid.major.y = element_blank())
 
+ggsave(plot = cont_fragm_plot, filename = here("figures/cont_fragm.png"), 
+       width = 12.7, height = 9, units = "cm")
+
+ggsave(plot = cont_fragm_plot, filename = here("figures/cont_fragm.pdf"), 
+       width = 12.7, height = 9, units = "cm", dpi = 500)
