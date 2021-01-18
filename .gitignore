@@ -4,3 +4,4 @@
 .Ruserdata
 data/*_models.RData
 data/allData_*
+reports/
