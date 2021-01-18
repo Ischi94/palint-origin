@@ -61,9 +61,7 @@ zaffos_binned2 <- zaffos_binned %>%
   nest() %>%
   # apply function to each column
   mutate(fragmentation_index = map(data, "fragmentation_index")) %>% 
-  ungroup() %>% 
-  # add dummy column 
-  add_column(change.prev = double(length = length(unique(zaffos_binned$stg))))
+  ungroup() 
 
 
 # calculate short-term change in fragmentation index
