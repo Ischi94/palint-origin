@@ -64,7 +64,7 @@ zaffos_binned2 <- zaffos_binned %>%
   ungroup() %>% 
   select(-data) %>% 
   # calculate short-term change in fragmentation index
-  mutate(change.prev = map_dbl(unique(zaffos_binned2$stg), short_term, j = 1))
+  mutate(change.prev = map_dbl(unique(zaffos_binned$stg), short_term, j = 1))
 
 
 # now move gradually back in time for each trend

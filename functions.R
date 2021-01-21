@@ -166,8 +166,8 @@ interaction_log_odds <- function(my_phylum, my_bins = unique(dat_final$bins)) {
 # set up function to calculate a regression between two rows/ stages for fragmentation index
 # this function calculates the short-term change in the fragmentation index
 short_term <- function(i, j) {
-  dum1 <- filter(zaffos_binned2,
-                 zaffos_binned2$stg %in% zaffos_binned2$stg[between(zaffos_binned2$stg, i-j, i)])
+  dum1 <- filter(zaffos_binned,
+                 stg %in% stg[between(stg, i-j, i)])
   
   dum2 <-  dum1 %>% 
     unnest(fragmentation_index) %>% 
@@ -184,7 +184,7 @@ short_term <- function(i, j) {
 # term lm result up by i-1.
 long_term <- function(i, j) {
   dum1 <- filter(zaffos_binned2,
-                 zaffos_binned2$stg %in% zaffos_binned2$stg[between(zaffos_binned2$stg, i-j, i-1)])
+                 stg %in% stg[between(stg, i-j, i-1)])
   
   if(nrow(dum1) != 0) {
     dum2 <-  dum1 %>% 
