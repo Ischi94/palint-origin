@@ -235,7 +235,7 @@ prob_fragm_sum <- prob_fragm %>%
 
 
 
-
+ 
 # plot data ---------------------------------------------------------------
 
 cont_fragm_plot <-  ggplot(aes(x = mean, y = fragm.int), data = prob_fragm_sum) +
