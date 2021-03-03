@@ -1,6 +1,7 @@
 # loading packages
 library(tidyverse) # for visualization
 library(here) # for project tidiness
+library(divDyn) # for stage data
 
 # load self-defined functions 
 source("functions.R")
@@ -33,14 +34,18 @@ cooling_sum <- summary(cooling_pal_int)
 phyl_names <- dat_final %>% 
   distinct(phylum) %>%
   drop_na() %>% 
-  # remove hemichordata and nematoda due to few data
-  filter(phylum != "Hemichordata" & phylum != "Nematoda") %>% 
+  # remove hemichordata, nematoda, and hyolitha due to few data
+  filter(!phylum %in% c("Hemichordata", "Hyolitha", "Nematoda")) %>% 
   pull() %>% 
   sort()
 
 # build dataframe
-log_odds <- tibble(name = c("Total", phyl_names, "Stage 14:29", "Stage 30:45", 
-                            "Stage 46:61", "Stage 62:77", "Stage 78:94"),
+log_odds <- tibble(name = c("Total", phyl_names, 
+                            "Tremadocian-Lochkovian", 
+                            "Pragian-Artinskian", 
+                            "Kungurian-Pliensbachian", 
+                            "Toarcian-Turonian", 
+                            "Coniacian-Pleistocene"),
                      lower_CI = numeric(length(name)), estimate = numeric(length(name)), 
                    upper_CI = numeric(length(name)))
 
@@ -98,7 +103,7 @@ log_odds[11, 2:4] <- Porifera
 
 # Through time ------------------------------------------------------------
 
-# take equaly spaced sequences through time
+# take equally spaced sequences through time
 age_seq <- dat_final %>% 
   as_tibble() %>% 
   distinct(bins) %>% 
@@ -145,8 +150,7 @@ forest_plot <- log_odds %>%
   geom_linerange(aes(xmin = lower_CI, xmax = upper_CI)) +
   geom_hline(yintercept = 15.5, colour = "grey50") +
   geom_hline(yintercept = 5.5, colour = "grey50") +
-  annotate(geom = "segment", x = 1.64, xend = 1.64, y = 0, yend = 16, 
-           size = 2.5, colour = "darkred", alpha = 0.2) +
+  geom_vline(xintercept = 0, colour = "darkred") +
   geom_linerange(aes(xmin = lower_CI, xmax = upper_CI),
                  size = 1, colour = "grey45") +
   geom_point(aes(fill = type), size = 2, shape = 21, stroke = 0.5, colour = "grey25" ) +
@@ -160,14 +164,14 @@ forest_plot <- log_odds %>%
   scale_x_continuous(breaks = seq(0, 4, by = 1)) +
   # add annotations
   # box
-  annotate(geom = "rect", xmin = -0.1, xmax = 1.15, 
+  annotate(geom = "rect", xmin = 0.4, xmax = 1.65, 
            ymin = - 0.6, ymax = 0.4, fill = "white") +
   # text
-  annotate(geom = "text", x = 0.4, y = -0.1,
+  annotate(geom = "text", x = 0.9, y = -0.1,
            colour = "grey30", label = "increasing likelihood", size = 2.5) +
   # arrow
-  annotate(geom = "segment", x = 0.95, y = -0.1,  
-           xend = 1.2, yend = -0.1, arrow = arrow(length = unit(2, "mm")), 
+  annotate(geom = "segment", x = 1.45, y = -0.1,  
+           xend = 1.7, yend = -0.1, arrow = arrow(length = unit(2, "mm")), 
            colour = "grey40", size = 0.35) +
   coord_cartesian(xlim = c(0, 4), ylim = c(-0.05, 16)) +
   scale_fill_manual(values = c("grey40", "#d5a069", "indianred"))
