@@ -6,6 +6,7 @@ library(here) # for project tidiness
 library(patchwork) # for combining of plots
 library(infer) # for bootstrapping
 library(brms) # for Stan-based models with standard R syntax (Bayesian Regression)
+library(effsize) # for cohen's d
 
 # load self-defined functions 
 source("functions.R")
@@ -258,7 +259,11 @@ my_wilcoxtest("WW", "less")
 # increase of origination probability after cooling-cooling, compared to all other 
 # palaeoclimate interactions
 prob_comparison <- prob %>%
-  mutate(pal.int = fct_collapse(pal.int, 
+  mutate(
+    # absolute values
+    ori.prob = ori.prob * 100,
+    # combine the rest
+    pal.int = fct_collapse(pal.int, 
                                 cooling_cooling = "CC", 
                                 other = c("CW", "WC", "WW")))   
 
@@ -335,25 +340,17 @@ WARMUP <- 500
 BAYES_SEED <- 1234
 options(mc.cores = parallel::detectCores())  # Use all cores
 
-# # specify the distribution of origination probability
-mean(prob$ori.prob) # 0.125
-sd(prob$ori.prob) # 0.034
-min(prob$ori.prob) # 0.040
-max(prob$ori.prob) # 0.278
-
 
 # run the model usin brm and rcpp
 brms_best <- brm(
-    # we suppress the intercept by setting ori.prob ~ 0 + genre, 
+    # we suppress the intercept by setting ori.prob ~ 0 + pal.int, 
     # brms returns coefficients for each of the groups, 
     # and these coefficients represent group means.
-    bf(ori.prob ~ 0 + pal.int, sigma ~ 0 + pal.int), 
+    bf(ori.prob ~ 0 + pal.int), 
     family = student,
     data = prob_comparison,
     prior = c(
-      # Set group mean prior, see distribution characteristics
-      set_prior("normal(0.124, 0353)", class = "b", lb = 0.029, ub = 0.288),
-      # Ser group variance priors
+      # Per group variance priors
       # we use the default exponential prior with a rate of 1/29
       set_prior("exponential(1.0/29)", class = "nu")),
     chains = CHAINS, iter = ITER, warmup = WARMUP, seed = BAYES_SEED, 
@@ -378,7 +375,7 @@ brms_best_post <- posterior_samples(brms_best) %>%
 # we can use tidyMCMC from broom to calculate the difference and 
 # create confidence intervals
 brms_best_tidy <- 
-  broom::tidy(brms_best_post, conf.int = TRUE, conf.level = 0.95, 
+  broom::tidy(brms_best_post, conf.int = TRUE, conf.level = 0.98, 
            estimate.method = "median", conf.method = "HPDinterval") 
 
 
@@ -392,14 +389,12 @@ boot_results <- tibble(estimate = diff_prob$stat,
 # Extract bayesian best results
 best_results <- brms_best_tidy %>% 
   filter(column == "diff_means") %>% 
-  select(estimate = mean, conf.low = min, conf.high = max)
+  transmute(estimate = mean*100, conf.low = min*100, conf.high = max*100) 
 
 # combine
 diff_in_means <- 
 full_join(boot_results, best_results) %>% 
-  add_column(method = c("bootstrapping", "best")) %>% 
-  # transform to percentage
-  mutate(estimate = estimate*100, conf.low = conf.low*100, conf.high = conf.high*100)
+  add_column(method = c("bootstrapping", "best")) 
 
 
 
@@ -434,83 +429,86 @@ effsize_bayes <- brms_best_post %>%
             denumerator = sqrt(sigma_div), 
             effect_size = numerator/denumerator) %>% 
   # calculate median effect size and 95 % CI using Hmisc
-  summarise(ci = list(enframe(Hmisc::smedian.hilow(effect_size)))) %>% 
+  summarise(mean = mean(effect_size),
+            ci = list(enframe(rethinking::HPDI(effect_size)))) %>% 
   unnest(cols = c(ci)) %>% 
-  spread(name, value)
+  spread(name, value) %>% 
+  select(estimate = mean, lower = '|0.89', upper = '0.89|')
 
 # combine to dataframe
 effect_size <- tribble(
   ~conf.low,                 ~estimate,             ~conf.high,             ~method,
 # ------------------------/---------------------/--------------------------/---------- 
 effsize_raw$conf.int[[1]], effsize_raw$estimate, effsize_raw$conf.int[[2]],  "raw",
-effsize_bayes$Lower,       effsize_bayes$Median, effsize_bayes$Upper,        "bayes"
+effsize_bayes$lower,       effsize_bayes$estimate, effsize_bayes$upper,        "bayes"
 )
 
 
 # Combined plot -----------------------------------------------------------
 
-# first save all the necessary data sets as list
+# # first save all the necessary data sets as list
 # effect_plot_data <- list(diff_in_means, percent_change, effect_size)
 # save(effect_plot_data, file = here("data/effect_plot_data.RData"))
 
 
 # plot it
 
-# define colours 
-my_colours <- c("grey40", "#d5a069", "indianred")
+
 
 # difference in means
 mean_diff <- ggplot(diff_in_means, aes(x = estimate, y = method)) +
-  geom_linerange(aes(xmin = conf.low, xmax = conf.high),
-                 size = 1, colour = "grey60") +
+  geom_linerange(aes(xmin = conf.low, xmax = conf.high, colour = method),
+                 size = 1) +
   geom_point(aes(fill = method), size = 3, colour = "grey25", 
-             shape = 21, stroke = 1) +
-  labs(y = NULL, x = "Difference in means") +
-  my_theme +
-  theme(panel.grid.major.x=element_line(colour = "grey", linetype = "dotted"), 
-        panel.grid.major.y = element_blank(), 
-        legend.position = "none", 
-        panel.grid.minor.x = element_blank()) +
+             shape = 21, stroke = 1, fill = "grey50") +
+  labs(y = NULL, x = "Difference in means", colour = NULL) +
+  my_theme + 
   scale_y_discrete(labels = c("Bayesian estimation", "Bootstrapping")) +
-  scale_fill_manual(values = my_colours[2:3])
+  scale_colour_manual(values = c("grey40", "grey70"), 
+                      labels = c("89% HPDI", "95% CI"), 
+                      guide = guide_legend(reverse = TRUE)) 
 
 
 # percentage change caused by cooling-cooling
 perc_change <- ggplot(percent_change, aes(x = estimate, y = method)) +
-  geom_linerange(aes(xmin = conf.low, xmax = conf.high),
-                 size = 1, colour = "grey60") +
+  geom_linerange(aes(xmin = conf.low, xmax = conf.high, colour = method),
+                 size = 1) +
   geom_point(aes(fill = method), size = 3, colour = "grey25",
-             shape = 21, stroke = 1) +
-  labs(y = NULL, x = "Percentage change") +
+             shape = 21, stroke = 1, fill = "grey50") +
+  labs(y = NULL, x = "Percentage change", colour = NULL) +
   my_theme +
-  theme(panel.grid.major.x = element_line(colour = "grey", linetype = "dotted"), 
-        panel.grid.major.y = element_blank(), 
-        legend.position = "none", 
-        panel.grid.minor.x = element_blank()) +
   scale_y_discrete(labels = c("Bayesian estimation", "Bootstrapping")) + 
   scale_x_continuous(labels = function(x) paste0(x, '%')) +
-  scale_fill_manual(values = my_colours[2:3])
+  scale_colour_manual(values = c("grey40", "grey70"), 
+                      labels = c("89% HPDI", "95% CI"), 
+                      guide = guide_legend(reverse = TRUE)) 
+
 
 
 # effect size cohens d
 cohens_d <- ggplot(effect_size, aes(x = estimate, y = method)) +
-  geom_linerange(aes(xmin = conf.low, xmax = conf.high),
-                 size = 1, colour = "grey60") +
+  geom_linerange(aes(xmin = conf.low, xmax = conf.high, colour = method),
+                 size = 1) +
   geom_point(aes(fill = method), size = 3, colour = "grey25", 
-             shape = 21, stroke = 1) +
-  labs(y = NULL, x = "Effect size (Cohen's d)") +
+             shape = 21, stroke = 1, fill = "grey50") +
+  labs(y = NULL, x = "Effect size", colour = NULL) +
   my_theme +
-  theme(panel.grid.major.x=element_line(colour = "grey", linetype = "dotted"), 
-        panel.grid.major.y = element_blank(), 
-        legend.position = "none",
-        panel.grid.minor.x = element_blank()) +
-  scale_y_discrete(labels = c("Bayesian estimation", "Raw data")) +
-  scale_fill_manual(values = my_colours[2:1])
+  scale_y_discrete(labels = c("Bayesian estimation", "Cohen's D")) +
+  scale_colour_manual(values = c("grey40", "grey70"), 
+                      labels = c("89% HPDI", "95% CI"), 
+                      guide = guide_legend(reverse = TRUE)) +
+  coord_cartesian(xlim = c(1, 1.4))
 
 
 # arrange plot and annotate
 combined_effect_size <- mean_diff / perc_change / cohens_d + 
-  plot_annotation(tag_levels = 'A')
+  plot_annotation(tag_levels = 'A') +
+  plot_layout(guides = 'collect') &
+  theme(panel.grid.major.x=element_line(colour = "grey", linetype = "dotted"), 
+        panel.grid.major.y = element_blank(), 
+        panel.grid.minor.x = element_blank(), 
+        legend.key = element_blank(), 
+        legend.position = "bottom")
 
 # save it
 ggsave(plot = combined_effect_size, filename = here("figures/combined_effect_sizes.png"), 
