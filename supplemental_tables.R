@@ -34,13 +34,18 @@ for (i in seq_along(my_rows)) {
 }
 
 # order alphabetically
-pbdb_smry <- pbdb_smry %>% arrange(Phylum)
+pbdb_smry <- pbdb_smry %>% 
+  arrange(Phylum) %>% 
+  mutate(across(where(is_double), as.integer))
 
 # make a flextable
-pbdb_fxt <- flextable(pbdb_smry) %>% theme_zebra() %>% autofit()
+pbdb_fxt <- flextable(pbdb_smry) %>% 
+  theme_booktabs() %>% 
+  autofit()
 
 # open docx-file and add flextable
-my_doc <- read_docx() %>% body_add_flextable(pbdb_fxt)
+my_doc <- read_docx() %>% 
+  body_add_flextable(pbdb_fxt)
 
 
 # Model comparison --------------------------------------------------------
@@ -62,11 +67,13 @@ model_comparison$overdispersed <- rep("no ***", 12)
 
 # make flextable
 model_comparison_fxt <- model_comparison %>% 
+  mutate(across(where(is_double), as.integer)) %>%  
   flextable(col_keys = c("models", "overdispersed", "AIC", "BIC")) %>% 
   set_header_labels(models = "Model Structure", overdispersed = "Overdispersed") %>% 
-  theme_zebra() %>% 
+  theme_booktabs() %>% 
   autofit() %>% 
-  hline(i = c(2, 4, 6, 8, 10), border = officer::fp_border(width = 1)) 
+  hline(i = c(2, 4, 6, 8, 10),
+        border = officer::fp_border(width = 1, style = "dashed", color = "darkgrey")) 
   
 
 # add to word file
@@ -90,10 +97,12 @@ pal_int_df_fxt1 <- pal_int_df %>%
   flextable() %>% 
   set_header_labels(model = "Model", intercept = "Intercept", 
                     interaction = "Interaction") %>% 
-  theme_zebra() %>% 
+  theme_booktabs() %>% 
   autofit() %>% 
-  hline(i = 10, border = officer::fp_border(width = 1)) %>% 
-  merge_v(j = ~ Type)
+  hline(i = 10, 
+        border = officer::fp_border(width = 1, style = "dashed", color = "darkgrey")) %>% 
+  merge_v(j = ~ Type) %>% 
+  fix_border_issues()
 
 # add to word file
 my_doc <- my_doc %>% 
@@ -104,16 +113,19 @@ my_doc <- my_doc %>%
 # second table for AIC and BIC
 pal_int_df_fxt2 <- pal_int_df %>% 
   bind_rows() %>% 
+  mutate(across(c(AIC, BIC), as.integer)) %>% 
   add_column(Type = c(rep("Warming", 10), rep("Cooling", 10)), 
              .before = "model") %>% 
   select(Type, model, AIC, BIC, dAIC, dBIC) %>% 
   flextable() %>% 
   set_header_labels(model = "Model", dAIC = "\u0394AIC",
                     dBIC = "\u0394BIC") %>% 
-  theme_zebra() %>% 
+  theme_booktabs() %>% 
   autofit() %>% 
-  hline(i = 10, border = officer::fp_border(width = 1)) %>% 
-  merge_v(j = ~ Type)
+  hline(i = 10, 
+        border = officer::fp_border(width = 1, style = "dashed", color = "darkgrey")) %>% 
+  merge_v(j = ~ Type) %>% 
+  fix_border_issues()
 
 # add to word file
 my_doc <- my_doc %>% 
@@ -148,10 +160,12 @@ model_tidy_fxt <- model_tidy %>%
   flextable() %>% 
   set_header_labels(term = "Term", estimate = "Estimate", std.error = "Std.error", 
                     statistic = "Z value", p.value = "P value", group = "Group") %>% 
-  theme_zebra() %>% 
+  theme_booktabs() %>% 
   autofit() %>% 
-  hline(i = 3, border = officer::fp_border(width = 1)) %>% 
-  merge_v(j = ~ Model) 
+  hline(i = 3, 
+        border = officer::fp_border(width = 1, style = "dashed", color = "darkgrey")) %>% 
+  merge_v(j = ~ Model) %>% 
+  fix_border_issues()
   
 # add to word file
 my_doc <- my_doc %>% 
@@ -167,13 +181,13 @@ cooling_glance <- cooling %>% broom::glance()
 model_perf <- warming_glance %>% full_join(cooling_glance)
 
 model_perf_fxt <- model_perf %>% 
+  mutate(across(logLik:deviance, as.integer)) %>% 
   add_column(Model = c("Warming", "Cooling"), .before = "sigma") %>% 
   add_column(Overdispersion = rep("no ***", 2)) %>% 
-  mutate_if(is.numeric, round, 2) %>%
   flextable() %>% 
   set_header_labels(sigma = "Sigma", logLik = "LogLik", deviance = "Deviance", 
                     df.residual = "DF residual") %>% 
-  theme_zebra() %>% 
+  theme_booktabs() %>% 
   autofit()
 
 # add to word file
@@ -190,7 +204,8 @@ my_doc <- my_doc %>%
 load(here("data/violin_plot_data.RData"))
 
 # summarise each palaeclimate response using quantiles
-prob_fxt <- prob %>% group_by(pal.int) %>% 
+prob_fxt <- prob %>% 
+  group_by(pal.int) %>% 
   summarise(my_quant = list(quantile(ori.prob, c(0.25, 0.5, 0.75))), 
             q = list(c(0.25, 0.5, 0.75))) %>% 
   unnest(c(my_quant, q)) %>% 
@@ -201,9 +216,10 @@ prob_fxt <- prob %>% group_by(pal.int) %>%
                              "Warming-Cooling", "Warming-Warming"))) %>% 
   mutate_if(is.numeric, round, 3) %>% 
   flextable() %>% 
+  colformat_double(digits = 3) %>% 
   set_header_labels(pal.int = "Palaeoclimate Interaction", '0.25' = "Lower Quartile",
                     '0.5' = "Median", '0.75' = "Upper Quartile") %>% 
-  theme_zebra() %>% 
+  theme_booktabs() %>% 
   autofit()
   
 # add to word file
@@ -225,19 +241,22 @@ effect_data_fxt <- effect_plot_data %>%
   bind_rows() %>%
   add_column(Parameter = c(rep("Difference in means", 2),
                            rep("Percentage change", 2), 
-                           rep("Cohen's d", 2)), .before = "estimate") %>% 
-  mutate_if(is.numeric, round, 2) %>%
+                           rep("Effect size", 2)), .before = "estimate") %>% 
+  mutate_if(is.numeric, round, 3) %>%
   mutate(Method = c("Bootstrapping", "Bayesian Estimate", 
                     "Bootstrapping", "Bayesian Estimate", 
-                    "Raw Data", "Bayesian Estimate")) %>% 
+                    "Cohen's D", "Bayesian Estimate")) %>% 
   select(Parameter, conf.low, estimate, conf.high, Method, -method) %>% 
   flextable() %>% 
+  colformat_double(digits = 2) %>% 
   set_header_labels(estimate = "Estimate", conf.low = "Lower CI",
                     conf.high = "Upper CI", method = "Method") %>% 
-  theme_zebra() %>% 
+  theme_booktabs() %>% 
   autofit() %>% 
   merge_v(j = ~ Parameter) %>% 
-  hline(i = c(2,4), border = officer::fp_border(width = 1)) 
+  hline(i = c(2,4), 
+        border = officer::fp_border(width = 1, style = "dashed", color = "darkgrey")) %>% 
+  fix_border_issues()
 
 # add to word file
 my_doc <- my_doc %>% 
@@ -256,12 +275,16 @@ log_odds_fxt <- log_odds %>%
   select(-type) %>% 
   mutate_if(is.numeric, round, 2) %>% 
   flextable() %>% 
+  colformat_double(digits = 2) %>% 
   set_header_labels(name = "Group", lower_CI = "Lower CI", 
                     estimate = "Log Odds ratio",
                     upper_CI = "Upper CI", method = "Method") %>% 
-  theme_zebra() %>% 
+  theme_booktabs() %>% 
   autofit() %>% 
-  hline(i = 11, border = officer::fp_border(width = 1)) 
+  hline(i = 11,
+        border = officer::fp_border(width = 1, style = "dashed", color = "darkgrey")) %>% 
+  hline(i = 1,
+        border = officer::fp_border(width = 1, style = "dashed", color = "darkgrey"))
 
   
 # add to word file
