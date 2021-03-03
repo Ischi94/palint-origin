@@ -78,8 +78,8 @@ summarise_model(Temp.cool)
 # Temp_cool.PI  ------------------------------------------------------------
 
 
-# model taking  both short-term and long-term temperature at each stage into account/ for warming
-# Iterate through each warming
+# model taking  both short-term and long-term temperature at each stage into account/ for cooling
+# Iterate through each cooling
 vars = names(dplyr::select(dat_final, trend.st1:trend.st10)) 
 Temp.cool.PI = lapply(setNames(vars, vars), function(var) {
   form = paste("origination~cooler+cooling:", var, "+(1|genus)")
@@ -151,8 +151,8 @@ summarise_model(Temp.lag.cool)
 # Temp.lag.cool.PI  ------------------------------------------------------------
 
 
-# model taking  both short-term and long-term temperature at each stage into account/ for warming
-# Iterate through each warming
+# model taking  both short-term and long-term temperature at each stage into account/ for cooling
+# Iterate through each cooling
 vars = names(dplyr::select(dat_final, trend.st1:trend.st10)) 
 Temp.lag.cool.PI = lapply(setNames(vars, vars), function(var) {
   form = paste("origination~cooler+lag10+cooling:", var, "+(1|genus)")
@@ -205,8 +205,8 @@ summarise_model(Temp.lag.int.warm.PI)
 
 # Temp.lag.int.cool -----------------------------------------------------------------
 
-# model taking paleoclimate interaction only into account/ for warming
-# Iterate through each warming interaction
+# model taking paleoclimate interaction only into account/ for cooling
+# Iterate through each cooling interaction
 vars = names(dplyr::select(dat_final, lag1:lag10)) 
 Temp.lag.int.cool = lapply(setNames(vars, vars), function(var) {
   form = paste("origination~cooler*", var, "+(1|genus)")
@@ -223,8 +223,8 @@ summarise_model(Temp.lag.int.cool)
 
 # Temp.lag.int.cool.PI -----------------------------------------------------------------
 
-# model taking paleoclimate interaction only into account/ for warming
-# Iterate through each warming interaction
+# model taking paleoclimate interaction only into account/ for cooling
+# Iterate through each cooling interaction
 vars = names(dplyr::select(dat_final, trend.st1:trend.st10)) 
 Temp.lag.int.cool.PI = lapply(setNames(vars, vars), function(var) {
   form = paste("origination~cooler*lag10+cooling:", var, "+(1|genus)")
@@ -241,7 +241,7 @@ summarise_model(Temp.lag.int.cool.PI)
 # save it
 # save(model_comparison,file = here("data/model_comparison.RData"))
 
-# # combine all (final) models in a list and save it as RData. Make sure that you 
+# combine all (final) models in a list and save it as RData. Make sure that you
 # use the glmms and not the function output from final model, they have the same names.
 # final_models <- list(Temp.warm, Temp.warm.PI,
 #      Temp.cool, Temp.cool.PI,
@@ -287,7 +287,7 @@ tidy_comparison_long <- model_comparison %>%
   mutate(meandAIC_TR = abs(meanAIC - min(meanAIC)))
 
 
-model_comparison <- ggplot(tidy_comparison, aes(x=meandAIC_PI, xend=meandAIC_TR, y=type)) + 
+model_comparison_plot <- ggplot(tidy_comparison, aes(x=meandAIC_PI, xend=meandAIC_TR, y=type)) + 
   geom_segment(aes(yend = type), colour = c("#354E71", "#841F27"),  size = 1, show.legend = FALSE) +
   geom_point(data = tidy_comparison_long, aes(meandAIC_TR, fill = traditional), 
              shape = 21, colour = "grey40", stroke = 0.3, size = 3) +
@@ -325,10 +325,10 @@ model_comparison <- ggplot(tidy_comparison, aes(x=meandAIC_PI, xend=meandAIC_TR,
 
 
 # save it
-ggsave(plot = model_comparison, here("figures/model_comparison.png"),
+ggsave(plot = model_comparison_plot, here("figures/model_comparison.png"),
        width = 9, height = 6, units = "cm")
 
-ggsave(plot = model_comparison, here("figures/model_comparison.pdf"),
+ggsave(plot = model_comparison_plot, here("figures/model_comparison.pdf"),
        width = 9, height = 6, units = "cm", dpi = 500)
 
 
