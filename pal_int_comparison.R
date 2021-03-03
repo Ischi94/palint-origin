@@ -63,7 +63,7 @@ cool_interaction_final <- cool_interaction[[which(cool_interaction_df$dAIC==0)]]
 sum_cool_interaction <- summary(cool_interaction_final) 
 
 
-# save it as a list
+# # save it as a list
 # pal_int_df <- list(warm_interaction_df, cool_interaction_df)
 # save(pal_int_df, file = here("data/pal_int_df.RData"))
 # pal_int_models <- list(warm_interaction_final, cool_interaction_final)
@@ -86,12 +86,12 @@ cw_pred <- predict(warm_interaction_final, newdata = cw_raw,
                    type = "response")
 
 #  warming cooling 
-wc_raw <- subset(dat_final, trend.st6 >=0 & cooling <= 0)
+wc_raw <- subset(dat_final, trend.st4 >=0 & cooling <= 0)
 wc_pred <- predict(cool_interaction_final, newdata = wc_raw,
                    type = "response")
 
 #  cooling cooling 
-cc_raw <- subset(dat_final, trend.st6 <=0 & cooling <= 0)
+cc_raw <- subset(dat_final, trend.st4 <=0 & cooling <= 0)
 cc_pred <- predict(cool_interaction_final, newdata = cc_raw,
                    type = "response")
 
@@ -147,7 +147,7 @@ violin <- ggplot(prob, aes(x=pal.int, y=ori.prob, fill=pal.int)) +
   scale_colour_manual(values=c("#841F27", "#354E71")) +
   # add grey lines to visualise means per group 
   stat_summary(fun = mean, fun.min = mean, fun.max = mean,
-               geom = "crossbar", width = c(0.7, 0.37, 0.58, 0.52), 
+               geom = "crossbar", width = c(0.54, 0.29, 0.49, 0.4), 
                colour = "grey60") +
   # add outer layer
   geom_violin(fill = NA) +
@@ -156,25 +156,21 @@ violin <- ggplot(prob, aes(x=pal.int, y=ori.prob, fill=pal.int)) +
            xend = 4.45, yend = 0.138, 
            curvature = -.325, arrow = arrow(length = unit(2.5, "mm")), 
            colour = "grey40") +
-  annotate(geom = "curve", x = 1.05, y = 0.055, # per group
-           xend = 0.58, yend = 0.146, 
+  annotate(geom = "curve", x = 1.25, y = 0.055, # per group
+           xend = 0.78, yend = 0.153, 
            curvature = -.7, arrow = arrow(length = unit(2.5, "mm")), 
            colour = "grey40") +
   # add lines
-  annotate(geom = "segment", x = c(4, 1.05), y = c(0.22, 0.055), # overall
-           xend = c(4.55, 0.475), yend = c(0.22, 0.055), colour = "grey40") +
+  annotate(geom = "segment", x = c(4, 1.25), y = c(0.22, 0.055), # overall
+           xend = c(4.55, 0.575), yend = c(0.22, 0.055), colour = "grey40") +
   # add background box
   annotate(geom = "rect", xmin = 4, xmax = 4.5, # overall
            ymin = 0.235, ymax = 0.26, fill = "white") +
   # add text
   annotate(geom = "text", x = 4.275, y = c(0.25, 0.235), # overall
            colour = "grey30", label = c("Overall", "mean"), size = 3.5) +
-  annotate(geom = "text", x = 0.75, y = c(0.045, 0.03, 0.015), # per group
+  annotate(geom = "text", x = 0.9, y = c(0.045, 0.03, 0.015), # per group
            colour = "grey30", label = c("Mean", "per", "group"), size = 3.5) +
-  # add stars for significance
-  annotate("text", x = c("CC", "CW", "WC", "WW"), 
-           y = c(0.27, 0.283, 0.172, 0.185), colour = "grey20",
-           label= c("***", "***", "***", "***")) +
   scale_x_discrete(labels = c("Cooling-Cooling", "Cooling-Warming", 
                               "Warming-Cooling", "Warming-Warming"), 
                    guide = guide_axis(n.dodge=2))
