@@ -224,7 +224,7 @@ prob_decr <- odds / (1 + odds)
 
 # mean
 av <- mean(c(prob_incr, prob_decr))
-# 0.134989
+# 0.13
 
 # calculate summaries
 prob_fragm_sum <- prob_fragm %>% 
