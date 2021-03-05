@@ -350,6 +350,8 @@ brms_best <- brm(
     family = student,
     data = prob_comparison,
     prior = c(
+      # Set informative group mean prior bound between 0 and 1
+      set_prior("normal(0.125, 0.25)", class = "b", lb = 0, ub = 1),
       # Per group variance priors
       # we use the default exponential prior with a rate of 1/29
       set_prior("exponential(1.0/29)", class = "nu")),
