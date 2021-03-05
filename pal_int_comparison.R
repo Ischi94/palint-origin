@@ -377,7 +377,7 @@ brms_best_post <- posterior_samples(brms_best) %>%
 # we can use tidyMCMC from broom to calculate the difference and 
 # create confidence intervals
 brms_best_tidy <- 
-  broom::tidy(brms_best_post, conf.int = TRUE, conf.level = 0.98, 
+  broom::tidy(brms_best_post, conf.int = TRUE, conf.level = 0.89, 
            estimate.method = "median", conf.method = "HPDinterval") 
 
 
