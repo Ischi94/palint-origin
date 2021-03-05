@@ -4,6 +4,7 @@ library(divDyn)
 library(here)
 library(lme4)
 library(geiger) 
+library(infer)
 
 # select is conflicted, define to use dplyr's select
 select <- dplyr::select
@@ -224,7 +225,7 @@ prob_decr <- odds / (1 + odds)
 
 # mean
 av <- mean(c(prob_incr, prob_decr))
-# 0.13
+# 0.14
 
 # calculate summaries
 prob_fragm_sum <- prob_fragm %>% 
@@ -265,3 +266,49 @@ ggsave(plot = cont_fragm_plot, filename = here("figures/cont_fragm.png"),
 
 ggsave(plot = cont_fragm_plot, filename = here("figures/cont_fragm.pdf"), 
        width = 12.7, height = 9, units = "cm", dpi = 500)
+
+
+
+# bootstrap differences ---------------------------------------------------
+
+load(here("data/fragmentation_plot_data.RData"))
+
+# first we need to define the groups we want to compare. We are interested in the 
+# increase of origination probability after increase-increase, compared to all other 
+# continental fragmentation interactions
+prob_comparison <- prob_fragm %>%
+  mutate(
+    # absolute values
+    ori.prob = ori.prob * 100,
+    # combine the rest
+    fragm.int = fct_collapse(fragm.int, 
+                           increase_increase = "Increase-Increase", 
+                           other = c("Increase-Decrease", "Decrease-Increase", "Decrease-Decrease")))   
+
+# Step 1: Calculate difference of means
+diff_prob <- prob_comparison %>% 
+  specify(ori.prob ~ fragm.int) %>% 
+  calculate("diff in means", order = c("increase_increase", "other")) 
+
+
+# Generate a bootstrapped distribution of the difference in means 
+boot_means <- prob_comparison %>% 
+  specify(ori.prob ~ fragm.int) %>% 
+  generate(reps = 2000, type = "bootstrap") %>% 
+  calculate("diff in means", order = c("increase_increase", "other"))
+
+# calculate confidence interval
+boot_confint <- boot_means %>% get_confidence_interval()
+
+# get overall mean origination probability
+mean_prob <- prob_fragm %>% 
+  summarise(mean_prob = mean(ori.prob)) %>% 
+  pull()
+
+# transform to percentage change
+percent_change <- tibble(estimate = diff_prob$stat, 
+                         conf.low = boot_confint$lower_ci, 
+                         conf.high = boot_confint$upper_ci) %>% 
+  mutate(estimate = (estimate/(mean_prob*100))*100,
+         conf.low = (conf.low/(mean_prob*100))*100,
+         conf.high = (conf.high/(mean_prob*100))*100)
