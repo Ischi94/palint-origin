@@ -224,8 +224,7 @@ prob_decr <- odds / (1 + odds)
 
 
 # mean
-av <- mean(c(prob_incr, prob_decr))
-# 0.14
+av <- median(c(prob_incr, prob_decr))
 
 # calculate summaries
 prob_fragm_sum <- prob_fragm %>% 
@@ -260,6 +259,8 @@ cont_fragm_plot <-  ggplot(aes(x = mean, y = fragm.int), data = prob_fragm_sum) 
   theme(panel.grid.major.x = element_line(colour = "grey", linetype = "dotted"),
         panel.grid.minor.x = element_blank(), 
         panel.grid.major.y = element_blank())
+
+cont_fragm_plot
 
 ggsave(plot = cont_fragm_plot, filename = here("figures/cont_fragm.png"), 
        width = 12.7, height = 9, units = "cm")
