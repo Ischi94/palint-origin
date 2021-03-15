@@ -273,21 +273,21 @@ prob_comparison <- prob %>%
 # Step 1: Calculate difference of means
 diff_prob <- prob_comparison %>% 
   specify(ori.prob ~ pal.int) %>% 
-  calculate("diff in means", order = c("cooling_cooling", "other")) 
+  calculate("diff in medians", order = c("cooling_cooling", "other")) 
 
 
 # Generate a bootstrapped distribution of the difference in means 
-boot_means <- prob_comparison %>% 
+boot_medians <- prob_comparison %>% 
   specify(ori.prob ~ pal.int) %>% 
   generate(reps = 2000, type = "bootstrap") %>% 
-  calculate("diff in means", order = c("cooling_cooling", "other"))
+  calculate("diff in medians", order = c("cooling_cooling", "other"))
 
 # calculate confidence interval
-boot_confint <- boot_means %>% get_confidence_interval()
+boot_confint <- boot_medians %>% get_confidence_interval()
 
 # plot bootstrapped distribution of differences in means
 # Red line shows observed difference; shaded area shows 95% confidence interval
-boot_distr <- boot_means %>% 
+boot_distr <- boot_medians %>% 
   visualize() + 
   shade_confidence_interval(boot_confint,
                             color = "#354E71", fill = "lightblue") +
@@ -303,7 +303,7 @@ diff_prob_null <- prob_comparison %>%
   specify(ori.prob ~ pal.int) %>% 
   hypothesize(null = "independence") %>% 
   generate(reps = 2000, type = "permute") %>% 
-  calculate("diff in means", order = c("cooling_cooling", "other"))
+  calculate("diff in medians", order = c("cooling_cooling", "other"))
 
 # Step 3: Put actual observed difference in the null world and see if it fits
 # Simulation-based null distribution of difference in means
