@@ -184,3 +184,84 @@ ggsave(plot = forest_plot, filename = here("figures/Log_Odds.png"),
 
 ggsave(plot = forest_plot, filename = here("figures/Log_Odds.pdf"), 
        width = 12.7, height = 9, units = "cm", dpi = 500)
+
+
+
+# improve grouping --------------------------------------------------------
+
+log_odds_impr <- log_odds[1:11, ] 
+
+# Paleozoic
+pal <- interaction_log_odds(all_phyla, 14:51) %>% 
+  add_column(name = "Paleozoic", .before = "LowerCI", 
+             type = "stages") %>% 
+  select(name, lower_CI = LowerCI, estimate = OR, upper_CI = UpperCI, type)
+
+log_odds_impr <- log_odds_impr %>% 
+  add_row(pal)
+
+# Mesozoic
+mes <- interaction_log_odds(all_phyla, 52:81) %>% 
+  add_column(name = "Mesozoic", .before = "LowerCI", 
+             type = "stages") %>% 
+  select(name, lower_CI = LowerCI, estimate = OR, upper_CI = UpperCI, type)
+
+log_odds_impr <- log_odds_impr %>% 
+  add_row(mes)
+
+# Cenozoic
+cen <- interaction_log_odds(all_phyla, 79:92) %>% 
+  add_column(name = "Cenozoic", .before = "LowerCI", 
+             type = "stages") %>% 
+  select(name, lower_CI = LowerCI, estimate = OR, upper_CI = UpperCI, type)
+
+log_odds_impr <- log_odds_impr %>% 
+  add_row(cen)
+
+# save data
+# save(log_odds_impr, file= here("data/log_odds_impr.RData"))
+
+#plot it
+###forest plot
+forest_plot_impr <- log_odds_impr %>% 
+  # reorder labels
+  mutate(name = as_factor(name)) %>% 
+  mutate(name = fct_reorder(name, desc(name))) %>% 
+  ggplot(aes(x = estimate, y = name)) +
+  geom_linerange(aes(xmin = lower_CI, xmax = upper_CI)) +
+  geom_vline(xintercept = 0, colour = "darkred") +
+  geom_linerange(aes(xmin = lower_CI, xmax = upper_CI),
+                 size = 1, colour = "grey45") +
+  geom_point(aes(fill = type), size = 2, shape = 21, stroke = 0.5, colour = "grey25" ) +
+  theme(panel.background = element_rect(fill = "white", colour = "grey50"),
+        panel.grid.major.x=element_line(colour = "grey", linetype = "dotted"),
+        text = element_text(family = "sans"), 
+        legend.position = "none", 
+        panel.grid.major.y = element_blank(), 
+        panel.grid.minor.x = element_blank()) + 
+  labs(x= "Log Odds ratio \n (Origination | Cooling-Cooling)", y = NULL)+
+  scale_x_continuous(breaks = seq(0, 4, by = 1)) +
+  # add annotations
+  # box
+  annotate(geom = "rect", xmin = 0.4, xmax = 1.65, 
+           ymin = - 0.6, ymax = 0.4, fill = "white") +
+  # text
+  annotate(geom = "text", x = 0.9, y = -0.1,
+           colour = "grey30", label = "increasing likelihood", size = 2.5) +
+  # arrow
+  annotate(geom = "segment", x = 1.45, y = -0.1,  
+           xend = 1.7, yend = -0.1, arrow = arrow(length = unit(2, "mm")), 
+           colour = "grey40", size = 0.35) +
+  coord_cartesian(xlim = c(0, 4), ylim = c(-0.05, 14)) +
+  scale_fill_manual(values = c("grey40", "#d5a069", "indianred"))
+
+forest_plot_impr
+
+# save plot
+ggsave(plot = forest_plot_impr, filename = here("figures/Log_Odds_impr.png"), 
+       width = 12.7, height = 9, units = "cm")
+
+ggsave(plot = forest_plot_impr, filename = here("figures/Log_Odds_impr.pdf"), 
+       width = 12.7, height = 9, units = "cm", dpi = 500)
+
+
