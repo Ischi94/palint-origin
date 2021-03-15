@@ -343,26 +343,38 @@ WARMUP <- 500
 BAYES_SEED <- 1234
 options(mc.cores = parallel::detectCores())  # Use all cores
 
+# visualize prior density
+ggplot(data = tibble(x = c(0, 100)), aes(x = x)) +
+  stat_function(fun = dnorm, n = 500, args = list(mean = 15, sd = 30))
 
-# run the model usin brm and rcpp
+# run the model usin brms and rcpp
 brms_best <- brm(
     # we suppress the intercept by setting ori.prob ~ 0 + pal.int, 
     # brms returns coefficients for each of the groups, 
     # and these coefficients represent group means.
-    bf(ori.prob ~ 0 + pal.int), 
+    bf(ori.prob ~ 0 + pal.int, sigma ~ 0 + pal.int), 
     family = student,
     data = prob_comparison,
     prior = c(
-      # Set informative group mean prior bound between 0 and 1
-      set_prior("normal(0.125, 0.25)", class = "b", lb = 0, ub = 1),
-      # Per group variance priors
-      # we use the default exponential prior with a rate of 1/29
+      # Set group mean prior as visualized above
+      # these are fairly informative prior capturing realistic expectations
+      set_prior("normal(15, 30)", class = "b", lb = 0, ub = 100),
+      # Set group variance prior using cauchy(0, 1)
+      set_prior("cauchy(0, 1)", class = "b", dpar = "sigma"),
       set_prior("exponential(1.0/29)", class = "nu")),
     chains = CHAINS, iter = ITER, warmup = WARMUP, seed = BAYES_SEED, 
     # save it as brms_best.rds
     file = here("data/brms_best"))
 
 
+# check model performance
+mcmc_check <- plot(brms_best)
+
+
+# save plot
+ggsave(plot = mcmc_check[[1]], filename = here("figures/mcmc_check.png"))
+
+ggsave(plot = mcmc_check[[1]], filename = here("figures/mcmc_check.pdf"))
 
 # extract the posterior samples for each of the groups, subtract them from each other,
 # and then calculate the credible interval
@@ -373,7 +385,7 @@ brms_best_post <- posterior_samples(brms_best) %>%
   # we need to log nu
   mutate(nu = log10(nu)) %>% 
   # calculate differences
-  mutate(diff_means = b_pal.intcooling_cooling - b_pal.intother,
+  mutate(diff_medians = b_pal.intcooling_cooling - b_pal.intother,
          diff_sigma = b_sigma_pal.intcooling_cooling - b_sigma_pal.intother)
 
 
@@ -393,11 +405,11 @@ boot_results <- tibble(estimate = diff_prob$stat,
 
 # Extract bayesian best results
 best_results <- brms_best_tidy %>% 
-  filter(column == "diff_means") %>% 
-  transmute(estimate = mean*100, conf.low = min*100, conf.high = max*100) 
+  filter(column == "diff_medians") %>% 
+  transmute(estimate = median, conf.low = min, conf.high = max) 
 
 # combine
-diff_in_means <- 
+diff_in_medians <- 
 full_join(boot_results, best_results) %>% 
   add_column(method = c("bootstrapping", "best")) 
 
@@ -406,7 +418,7 @@ full_join(boot_results, best_results) %>%
 # Percentage change -------------------------------------------------------
 
 
-percent_change <- diff_in_means %>% 
+percent_change <- diff_in_medians %>% 
   mutate(estimate = (estimate/(av*100))*100,
          conf.low = (conf.low/(av*100))*100,
          conf.high = (conf.high/(av*100))*100)
@@ -452,7 +464,7 @@ effsize_bayes$lower,       effsize_bayes$estimate, effsize_bayes$upper,        "
 # Combined plot -----------------------------------------------------------
 
 # # first save all the necessary data sets as list
-# effect_plot_data <- list(diff_in_means, percent_change, effect_size)
+# effect_plot_data <- list(diff_in_medians, percent_change, effect_size)
 # save(effect_plot_data, file = here("data/effect_plot_data.RData"))
 
 
