@@ -118,6 +118,8 @@ odds <- exp(sum_cool_interaction$coefficients[1])
 prob_cool <- odds / (1 + odds)
 
 # mean
+median(c(prob_cool, prob_warm))
+
 av <- (prob_cool + prob_warm)/2
 
 
@@ -128,7 +130,7 @@ my_theme <- theme(panel.background = element_rect(fill = "white", colour = "grey
                   panel.grid.major.x = element_blank())
 
 # produce a violin plot
-# black line shows overall mean
+# black line shows overall median
 violin <- ggplot(prob, aes(x=pal.int, y=ori.prob, fill=pal.int)) + 
   geom_hline(yintercept = av)+
   geom_violin() +
@@ -146,9 +148,9 @@ violin <- ggplot(prob, aes(x=pal.int, y=ori.prob, fill=pal.int)) +
                        aes(colour = pal.int, fill = pal.int)) +
   scale_fill_manual(values = c("#841F27", "#354E71")) +
   scale_colour_manual(values=c("#841F27", "#354E71")) +
-  # add grey lines to visualise means per group 
-  stat_summary(fun = mean, fun.min = mean, fun.max = mean,
-               geom = "crossbar", width = c(0.54, 0.29, 0.49, 0.4), 
+  # add grey lines to visualise medians per group 
+  stat_summary(fun = median, fun.min = median, fun.max = median,
+               geom = "crossbar", width = c(0.915, 0.35, 0.53, 0.42), 
                colour = "grey60") +
   # add outer layer
   geom_violin(fill = NA) +
@@ -158,8 +160,8 @@ violin <- ggplot(prob, aes(x=pal.int, y=ori.prob, fill=pal.int)) +
            curvature = -.325, arrow = arrow(length = unit(2.5, "mm")), 
            colour = "grey40") +
   annotate(geom = "curve", x = 1.25, y = 0.055, # per group
-           xend = 0.78, yend = 0.153, 
-           curvature = -.7, arrow = arrow(length = unit(2.5, "mm")), 
+           xend = 0.68, yend = 0.146, 
+           curvature = -.5, arrow = arrow(length = unit(2.5, "mm")), 
            colour = "grey40") +
   # add lines
   annotate(geom = "segment", x = c(4, 1.25), y = c(0.22, 0.055), # overall
@@ -169,13 +171,14 @@ violin <- ggplot(prob, aes(x=pal.int, y=ori.prob, fill=pal.int)) +
            ymin = 0.235, ymax = 0.26, fill = "white") +
   # add text
   annotate(geom = "text", x = 4.275, y = c(0.25, 0.235), # overall
-           colour = "grey30", label = c("Overall", "mean"), size = 3.5) +
+           colour = "grey30", label = c("Overall", "median"), size = 3.5) +
   annotate(geom = "text", x = 0.9, y = c(0.045, 0.03, 0.015), # per group
-           colour = "grey30", label = c("Mean", "per", "group"), size = 3.5) +
+           colour = "grey30", label = c("Median", "per", "group"), size = 3.5) +
   scale_x_discrete(labels = c("Cooling-Cooling", "Cooling-Warming", 
                               "Warming-Cooling", "Warming-Warming"), 
                    guide = guide_axis(n.dodge=2))
 
+violin
 
 ggsave(plot = violin, filename = here("figures/violin_plot.png"), 
        width = 12.7, height = 9, units = "cm")
