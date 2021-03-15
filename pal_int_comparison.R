@@ -473,12 +473,12 @@ effsize_bayes$lower,       effsize_bayes$estimate, effsize_bayes$upper,        "
 
 
 # difference in means
-mean_diff <- ggplot(diff_in_means, aes(x = estimate, y = method)) +
+median_diff <- ggplot(diff_in_medians, aes(x = estimate, y = method)) +
   geom_linerange(aes(xmin = conf.low, xmax = conf.high, colour = method),
                  size = 1) +
   geom_point(aes(fill = method), size = 3, colour = "grey25", 
              shape = 21, stroke = 1, fill = "grey50") +
-  labs(y = NULL, x = "Difference in means", colour = NULL) +
+  labs(y = NULL, x = "Difference in medians", colour = NULL) +
   my_theme + 
   scale_y_discrete(labels = c("Bayesian estimation", "Bootstrapping")) +
   scale_colour_manual(values = c("grey40", "grey70"), 
@@ -513,12 +513,10 @@ cohens_d <- ggplot(effect_size, aes(x = estimate, y = method)) +
   scale_y_discrete(labels = c("Bayesian estimation", "Cohen's D")) +
   scale_colour_manual(values = c("grey40", "grey70"), 
                       labels = c("89% HPDI", "95% CI"), 
-                      guide = guide_legend(reverse = TRUE)) +
-  coord_cartesian(xlim = c(1, 1.4))
-
+                      guide = guide_legend(reverse = TRUE)) 
 
 # arrange plot and annotate
-combined_effect_size <- mean_diff / perc_change / cohens_d + 
+combined_effect_size <- median_diff / perc_change / cohens_d + 
   plot_annotation(tag_levels = 'A') +
   plot_layout(guides = 'collect') &
   theme(panel.grid.major.x=element_line(colour = "grey", linetype = "dotted"), 
