@@ -254,7 +254,7 @@ cont_fragm_plot <-  ggplot(aes(x = mean, y = fragm.int), data = prob_fragm_sum) 
   annotate(geom = "rect", xmin = 0.126, xmax = 0.1323,
            ymin = 1.225, ymax = 1.66, fill = "white") +
   annotate(geom = "text", x = 0.13, y = c(1.51, 1.32),
-           colour = "grey30", label = c("Overall", "mean"), size = 3) +
+           colour = "grey30", label = c("Overall", "median"), size = 3) +
   theme_bw() +
   theme(panel.grid.major.x = element_line(colour = "grey", linetype = "dotted"),
         panel.grid.minor.x = element_blank(), 
