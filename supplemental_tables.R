@@ -239,7 +239,7 @@ load(here("data/effect_plot_data.RData"))
 
 effect_data_fxt <- effect_plot_data %>% 
   bind_rows() %>%
-  add_column(Parameter = c(rep("Difference in means", 2),
+  add_column(Parameter = c(rep("Difference in medians", 2),
                            rep("Percentage change", 2), 
                            rep("Effect size", 2)), .before = "estimate") %>% 
   mutate_if(is.numeric, round, 3) %>%
