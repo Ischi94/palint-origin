@@ -1,23 +1,20 @@
 # download libraries
-library(chronosphere)
 library(divDyn)
 library(tidyverse)
 library(here)
 
 # load self-defined functions 
-source("functions.R")
+source(here("R/functions.R"))
 
-# 1 Download pbdb data from chronosphere ----------------------------------
 
-# look up how the data is names
-# ind <- dataindex()
-# head(ind)
-pbdb <- fetch(dat="pbdb")
 
-# save it as a R-file
-# save(pbdb, file=here("data/allData_2021-03-03.RData"))
+# 1 load in downloaded PBDB data ------------------------------------------
 
-# load(file=here("data/allData_2020-01-26.RData"))
+
+# load in data. The data contains all occurrences and parameters of the pbdb
+# data base
+load(file=here("data/allData_2021-04-21.RData"))
+
 
 
 # 2 Filtering by taxonomic data ----------------------------------------------
@@ -174,9 +171,9 @@ dat <- subset(dat, !is.na(stg))
 # called subsample().
 set.seed(43)
 datsqs <- subsample(dat, bin="stg", tax="clgen", coll="collection_no", q=0.8,
-                           iter=1, ref="reference_no",singleton="ref", type="sqs", 
-                           duplicates=FALSE, excludeDominant=TRUE, largestColl =TRUE,
-                           output="list", na.rm=TRUE, FUN = NULL)
+                    iter=1, ref="reference_no",singleton="ref", type="sqs", 
+                    duplicates=FALSE, excludeDominant=TRUE, largestColl =TRUE,
+                    output="list", na.rm=TRUE, FUN = NULL)
 # save it
 datsqs <- datsqs$results[[1]]
 
@@ -242,7 +239,7 @@ dat_range <- dat_range %>%
 
 
 
-# Calculate short-term temperature change ---------------------------------
+# 5 Calculate short-term temperature change ---------------------------------
 
 
 # prepare weizer & prokoph temperature data. We are loading the file which was 
@@ -300,7 +297,7 @@ rm(list=ls()[! ls() %in% c("dat_range", "stages", "isotemp", "isotemp2")])
 
 
 
-# Calculate multiple long-term temperature trends -------------------------
+# 6 Calculate multiple long-term temperature trends -------------------------
 
 
 # build dummies for calculation
@@ -347,7 +344,7 @@ dat_temp <- dat_temp %>%
                 change.prev, lag1:lag10) %>%
   transform(bins = as.numeric(as.character(bins)))
 
-# Calculate multiple long-term temperature trends with varying l --------
+# 7 Calculate multiple long-term temperature trends with varying l --------
 
 
 # Use lm() to determine slope of the long-termtemperature trends
