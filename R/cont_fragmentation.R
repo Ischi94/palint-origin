@@ -1,5 +1,4 @@
 library(tidyverse)
-library(chronosphere)
 library(divDyn)
 library(here)
 library(lme4)
@@ -16,9 +15,8 @@ source(here("R/functions.R"))
 # load data ---------------------------------------------------------------
 
 # load zaffos fragmentation index
-zaffos <- fetch(dat = "som", var = "zaffos-fragment") %>% 
-  as_tibble() %>% 
-  select(age_seq = X, fragmentation_index = fragmentation.index)
+load(file = here("data/continental_fragmentation_data.RData"))
+
 
 # load stage data for binning
 data(stages)
