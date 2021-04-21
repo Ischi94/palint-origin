@@ -98,31 +98,31 @@ cool_interaction_final2 <- cool_interaction2[[which(cool_interaction_df2$dAIC==0
 
 # compare models via information criterion --------------------------------
 
+# set up names for table
+model_name <- c("Added effect", "Null model")
 
+# for warming
 comparison_warm <- anova(warm_interaction_final1, warm_interaction_final2) %>% 
   as_tibble() %>% 
   add_column(Type = "Warming", 
-             Model = c("Added effect", 
-                       "Null model"), 
+             Model = model_name, 
              .before = "npar") %>% 
   select(Type, Model, AIC:logLik)
   
   
-
+# for cooling
 comparison_cool <- anova(cool_interaction_final1, cool_interaction_final2) %>% 
   as_tibble() %>% 
   add_column(Type = "Cooling",
-             Model = c("Added effect", 
-                       "Null model"), 
+             Model = model_name, 
              .before = "npar") %>% 
   select(Type, Model, AIC:logLik)
 
-# combine to one tibble and save as RData
+
+# combine to one tibble and save as csv
 comparison_warm %>% 
   full_join(comparison_cool) %>% 
-  save(file = here("data/random_effect_test.RData"))
-
-
+  write_csv(file = here("data/random_effect_test.csv"))
 
 
 
