@@ -1,5 +1,9 @@
 # Paleoclimate Interaction Origination
 
+<!-- badges: start -->
+[![Generic badge](https://img.shields.io/badge/Status-In_Revision-blue.svg)](https://shields.io/)
+<!-- badges: end -->
+
 This the R project to the second (potential) publication for PastKey covering paleoclimate interactions and origination probability.  
   
 # Order of scripts  
