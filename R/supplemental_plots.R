@@ -335,3 +335,63 @@ combined_isotope <- isotope_plot / temp_plot +
 
 ggsave(plot = combined_isotope, file = here("figures/combined_isotopes.png"), 
        width = 210, height = 297, units = "mm") 
+
+
+
+# time series of all parameter ----------------------------------------------
+
+# origination signal
+signal_plot <- 
+  dat_final %>% 
+  mutate(stg = as.numeric(as.character(bins))) %>% 
+  left_join(stages) %>% 
+  group_by(mid, systemCol) %>% 
+  summarise(ori_signal = sum(origination)) %>% 
+  ungroup() %>% 
+  ggplot(aes(mid, ori_signal, fill = systemCol)) +
+  geom_line(aes(group = 1)) +
+  geom_point(shape = 21, size = 3, 
+             alpha = 0.8, show.legend = FALSE) +
+  scale_fill_identity() +
+  scale_x_reverse(limits = c(500, -5)) +
+  coord_cartesian(expand = FALSE, ylim = c(-10, 225)) +
+  labs(x = "age [myr]", 
+       y = "Origination events") +
+  my_theme
+
+# continental fragmentation
+load(file = here("data/continental_fragmentation_data.RData"))
+cont_plot <- 
+  zaffos %>% 
+  ggplot(aes(age_seq, fragmentation_index)) +
+  geom_line() +
+  scale_x_reverse(limits = c(500, -5)) +
+  labs(x = "age [myr]", 
+       y = "Fragmentation index") +
+  coord_cartesian(expand = FALSE, ylim = c(0.26, 0.6)) +
+  my_theme
+
+# averaged temperature
+temp_plot <- isotemp %>% 
+  rename(stg = Stage) %>% 
+  left_join(stages) %>% 
+  ggplot(aes(mid, Temp)) +
+  geom_line() +
+  coord_geo(size = list(2.5, 3), height = list(unit(1.5, "lines"), unit(0.75, "lines")),
+            alpha = 2 / 3, rot = list(90, 0),
+            pos = list("bottom", "bottom"),  skip = c("Holocene", "Pleistocene"),
+            dat = list("epochs", "periods"), abbrv = TRUE, 
+            xlim = c(500, -5)) +
+  scale_x_reverse() +
+  ylim(c(14, 40)) +
+  labs(y = "Temperature [°C]", 
+       x = "age [myr]") +
+  my_theme  
+
+# combine plots
+combined_parameter <- signal_plot / cont_plot / temp_plot + 
+  plot_annotation(tag_levels = 'A')
+
+ggsave(plot = combined_parameter, file = here("figures/combined_parameter.png"), 
+       width = 210, height = 297, units = "mm")
+
