@@ -46,7 +46,7 @@ sum_warm_interaction <- summary(warm_interaction_final)
 # for cooling
 # model taking both short-term and long-term temperature at each stage into account/
 # for warming
-# Iterate through each warming
+# Iterate through each cooling
 vars = names(dplyr::select(dat_final, trend.st1:trend.st10)) 
 cool_interaction = lapply(setNames(vars, vars), function(var) {
   form = paste("origination~cooling:", var, "+(1|genus)")
