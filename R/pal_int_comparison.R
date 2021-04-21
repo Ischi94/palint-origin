@@ -9,7 +9,7 @@ library(brms) # for Stan-based models with standard R syntax (Bayesian Regressio
 library(effsize) # for cohen's d
 
 # load self-defined functions 
-source("functions.R")
+source(here("R/functions.R"))
 
 # Calculate GLMM's ----------------------------------------------------------------
 

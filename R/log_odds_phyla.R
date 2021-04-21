@@ -4,7 +4,7 @@ library(here) # for project tidiness
 library(divDyn) # for stage data
 
 # load self-defined functions 
-source("functions.R")
+source(here("R/functions.R"))
 
 # Data --------------------------------------------------------------------
 

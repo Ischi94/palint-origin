@@ -10,7 +10,7 @@ library(infer)
 select <- dplyr::select
 
 # load self-defined functions 
-source("functions.R")
+source(here("R/functions.R"))
 
 
 # load data ---------------------------------------------------------------

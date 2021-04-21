@@ -5,7 +5,7 @@ library(geiger) # for AICw
 library(here) # for project tidying
 
 # load self-defined functions 
-source("functions.R")
+source(here("R/functions.R"))
 
 # Analysis ----------------------------------------------------------------
 
