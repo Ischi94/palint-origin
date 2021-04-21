@@ -293,6 +293,26 @@ my_doc <- my_doc %>%
   body_add_flextable(log_odds_fxt, pos = "after")
 
 
+
+# random effect test ------------------------------------------------------
+
+rand_eff_test_fxt <- read_csv(here("data/random_effect_test.csv")) %>% 
+  flextable() %>% 
+  colformat_double(digits = 0) %>% 
+  theme_booktabs() %>% 
+  merge_v(j = ~ Type) %>%
+  autofit() %>% 
+  hline(i = 2,
+        border = officer::fp_border(width = 1, style = "dashed", color = "darkgrey")) %>% 
+  fix_border_issues()
+  
+# add to word file
+my_doc <- my_doc %>% 
+  body_add_break() %>% 
+  body_add_flextable(rand_eff_test_fxt, pos = "after")
+
+
+
 # Make word file ----------------------------------------------------------
 
 # convert to word file/ add input to empty docx
