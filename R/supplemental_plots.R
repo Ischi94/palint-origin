@@ -9,7 +9,8 @@ library(patchwork) # for putting plots together
 
 # load data 
 data(stages)
-load(file=here("data/occurrence_sqs_data.RData"))
+
+load(file = here("data/occurrence_sqs_data.RData"))
 
 # convert it to tibble
 datsqs <- as_tibble(datsqs)
@@ -274,3 +275,63 @@ ggsave(plot = combined_observations, file=here("figures/combined_observations.pn
        width = 210, height = 297, units = "mm") 
 
 
+
+# isotope data ------------------------------------------------------------
+
+# load data
+veizer <- read_csv(file = here("data/raw_isotope_data.csv"))
+
+# temperature data
+isotemp <- read_csv(file=here("data/TimeSeriesUsed.csv")) 
+
+# plot veizer isotope data
+isotope_plot <- veizer %>%
+  drop_na(d18O) %>% 
+  mutate(fossil = as.factor(fossil), 
+         fossil = fct_collapse(fossil, 
+                               Brachiopod = c("brachiopod", "Brachiopod"), 
+                               Belemnite = c("belemnite", "Belemnite"), 
+                               Bivalve = c("bivalve", "Bivalve"), 
+                               Foraminifera = c("Plankticf", "PlankticF", "BenthicF"))) %>% 
+  filter(fossil %in% c("Brachiopod", "Belemnite", "Bivalve", "Foraminifera"), 
+         gts2012 <= 500) %>% 
+  ggplot(aes(gts2012, d18O, fill = fossil)) +
+  geom_hline(yintercept = 0, linetype = "dotted", 
+             colour = "grey20") +
+  geom_point(shape = 21, colour = "grey30", 
+             stroke = 1.2, alpha = 0.1, 
+             show.legend = FALSE) +
+  scale_fill_manual(values = my_colours[c(1, 2, 5, 7)]) +
+  scale_x_reverse(limits = c(500, -5)) +
+  coord_cartesian(expand = FALSE) +
+  facet_wrap(~fossil, ncol = 1) +
+  labs(x = "age [myr]", 
+       y = expression(delta^18~O)) +
+  my_theme +
+  theme(strip.text.x = element_text(size = 12, 
+                                    colour = "grey20"))
+
+# plot average temperature
+temp_plot <- isotemp %>% 
+  rename(stg = Stage) %>% 
+  left_join(stages) %>% 
+  ggplot(aes(mid, Temp)) +
+  geom_line(colour = "grey40", 
+            size = 1.2) +
+  coord_geo(size = list(2.5, 3), height = list(unit(1.5, "lines"), unit(0.75, "lines")),
+            alpha = 2 / 3, rot = list(90, 0),
+            pos = list("bottom", "bottom"),  skip = c("Holocene", "Pleistocene"),
+            dat = list("epochs", "periods"), abbrv = TRUE, 
+            xlim = c(500, -5)) +
+  scale_x_reverse() +
+  ylim(c(14, 40)) +
+  labs(y = "Temperature [°C]", 
+       x = "age [myr]") +
+  my_theme
+
+# combine plots 
+combined_isotope <- isotope_plot / temp_plot +
+  plot_layout(heights = c(2,1))
+
+ggsave(plot = combined_isotope, file = here("figures/combined_isotopes.png"), 
+       width = 210, height = 297, units = "mm") 
