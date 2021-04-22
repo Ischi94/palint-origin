@@ -14,8 +14,10 @@ load(file = here("data/occurrence_sqs_data.RData"))
 
 # convert it to tibble
 datsqs <- as_tibble(datsqs)
-  
-  
+
+# load theme
+source(here("R/functions.R"))
+
 # calculate rates
 # interesting rates: 
 # tOri: Number of originating taxa, taxa that have first occurrences in the focal bin, 
@@ -68,10 +70,6 @@ for (i in phyla){
 # collapse or flatten the list to a dataframe for facetting  
 metrics <- bind_rows(metrics)
 
-# define theme
-my_theme <- theme(panel.background = element_rect(fill = "white", colour = "grey50"),
-                  panel.grid.major.x=element_line(colour = "grey", linetype = "dotted"),
-                  text = element_text(family = "sans"), strip.background = element_blank())
 
 # if you want to showcase a different metric in the plot, just change
 # oriPC to whatever metric you fancy

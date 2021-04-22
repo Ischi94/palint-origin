@@ -278,3 +278,30 @@ my_wilcoxtest <- function(PI, alternative) {
 ###
 
 ###
+# calculate the cross correlation without plottting and in a tidy way
+cross_corr <- function(.data) {
+  ccf(.data$temp, .data$fragmentation_index, 
+      plot = FALSE, lag.max = 10)
+}
+###
+
+###
+# calculate the ci for the cross correlation
+cross_corr_ci <- function(n.used) {
+  qnorm((1 + 0.95)/2)/sqrt(n.used)
+}
+
+###
+
+
+###
+# custom ggplot theme
+# define theme
+my_theme <- theme(panel.background = element_rect(fill = "white", colour = "grey50"),
+                  panel.grid.major.x = element_line(colour = "grey", linetype = "dotted"),
+                  panel.grid.major.y = element_blank(),
+                  panel.grid.minor = element_blank(),
+                  text = element_text(family = "sans"),
+                  strip.background = element_blank())
+
+###
