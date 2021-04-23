@@ -293,6 +293,13 @@ cross_corr_ci <- function(n.used) {
 
 ###
 
+### calculate pearsons r correlation and return a tibble
+cor_test_r <- function(.data) {
+  cor.test(.data$temp, .data$fragmentation_index) %>% 
+    tidy() %>% 
+    select(estimate, conf.low, conf.high)
+}
+###
 
 ###
 # custom ggplot theme

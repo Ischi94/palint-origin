@@ -133,3 +133,42 @@ correlation_plot <- ccf_cool %>%
 ggsave(correlation_plot, filename = here("figures/correlation_plot.png"))  
 
 
+
+# cross-correlation through time ------------------------------------------
+
+pearson_r <- list(
+  all_data,   # all data
+  cool_data, # cool data only
+  all_data %>%
+    filter(stg <= 51), # Paleozoic
+  all_data %>%
+    filter(stg > 51 & stg < 82), # Mesozoic
+  all_data %>%
+    filter(stg >= 82) # Cenozoic
+  ) %>% 
+  map_dfr(cor_test_r) %>% 
+  add_column(.before = "estimate", 
+             type = c("All Data", 
+                      "Cool subset", 
+                      "Paleozoic", 
+                      "Mesozoic", 
+                      "Cenozoic"))
+
+# save data
+# write_csv(pearson_r, here("data/pearson_r.csv"))
+
+pearson_r %>% 
+  ggplot(aes(estimate, fct_reorder(type, c(5, 4, 3, 2, 1)), 
+             xmin = conf.low, xmax = conf.high)) +
+  geom_vline(xintercept = 0, 
+             colour = "firebrick") +
+  geom_pointrange(colour = "grey30", size = 1.2) +
+  geom_point(size = 3, colour = "white") +
+  labs(y = NULL, 
+       x = "Pearson correlation coefficient") +
+  my_theme
+
+
+pearson_r %>% 
+  mutate(estimate_sq = estimate^2)
+
