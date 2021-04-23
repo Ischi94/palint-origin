@@ -160,8 +160,8 @@ pearson_r <- list(
 pearson_r %>% 
   ggplot(aes(estimate, fct_reorder(type, c(5, 4, 3, 2, 1)), 
              xmin = conf.low, xmax = conf.high)) +
-  geom_vline(xintercept = 0, 
-             colour = "firebrick") +
+  geom_vline(xintercept = 0, alpha = 0.8,
+             colour = "#841F27", size = 1.2) +
   geom_pointrange(colour = "grey30", size = 1.2) +
   geom_point(size = 3, colour = "white") +
   labs(y = NULL, 
