@@ -123,11 +123,6 @@ median(c(prob_cool, prob_warm))
 av <- (prob_cool + prob_warm)/2
 
 
-# define theme
-my_theme <- theme(panel.background = element_rect(fill = "white", colour = "grey50"),
-                  panel.grid.major.y=element_line(colour = "grey", linetype = "dotted"),
-                  text = element_text(family = "sans"), 
-                  panel.grid.major.x = element_blank())
 
 # produce a violin plot
 # black line shows overall median
@@ -139,7 +134,7 @@ violin <- ggplot(prob, aes(x=pal.int, y=ori.prob, fill=pal.int)) +
                      breaks = seq(0, 0.3, by= 0.05), 
                      labels = scales::percent_format(accuracy = 1)) +
   xlab(NULL) +
-  my_theme+
+  my_theme +
   theme(legend.position = "none", 
         axis.ticks.length.x.bottom = unit(0.25, "cm")) +
   # add half a violin to visualise palaeoclimate interactions
@@ -483,7 +478,8 @@ median_diff <- ggplot(diff_in_medians, aes(x = estimate, y = method)) +
   scale_y_discrete(labels = c("Bayesian estimation", "Bootstrapping")) +
   scale_colour_manual(values = c("grey40", "grey70"), 
                       labels = c("89% HPDI", "95% CI"), 
-                      guide = guide_legend(reverse = TRUE)) 
+                      guide = guide_legend(reverse = TRUE)) +
+  theme(legend.background = element_blank())
 
 
 # percentage change caused by cooling-cooling
