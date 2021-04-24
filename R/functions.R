@@ -297,7 +297,7 @@ cross_corr_ci <- function(n.used) {
 cor_test_r <- function(.data) {
   cor.test(.data$temp, .data$fragmentation_index) %>% 
     tidy() %>% 
-    select(estimate, conf.low, conf.high)
+    select(estimate, conf.low, conf.high, p.value)
 }
 ###
 

@@ -318,12 +318,16 @@ my_doc <- my_doc %>%
 
 # load data and render flextable
 pearson_r_fxt <- read_csv(here("data/pearson_r.csv")) %>% 
-  mutate("R-squared" = estimate^2) %>% 
+  mutate("R-squared" = estimate^2, 
+         # Bonferroni Correction
+         "p-value adj." = p.adjust(p.value)) %>%
   select(Data = type, 
          R = estimate,
          "Lower CI" = conf.low, 
          "Upper CI" = conf.high, 
-         "R-squared") %>% 
+         "R-squared", 
+         "p-value" = p.value, 
+         "p-value adj.") %>% 
   flextable() %>% 
   colformat_double(digits = 2) %>%
   theme_booktabs() %>% 
