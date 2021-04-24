@@ -362,14 +362,6 @@ brms_best <- brm(
     file = here("data/brms_best"))
 
 
-# check model performance
-mcmc_check <- plot(brms_best)
-
-
-# save plot
-ggsave(plot = mcmc_check[[1]], filename = here("figures/mcmc_check.png"))
-
-ggsave(plot = mcmc_check[[1]], filename = here("figures/mcmc_check.pdf"))
 
 # extract the posterior samples for each of the groups, subtract them from each other,
 # and then calculate the credible interval
