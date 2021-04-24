@@ -326,7 +326,6 @@ pearson_r_fxt <- read_csv(here("data/pearson_r.csv")) %>%
          "Lower CI" = conf.low, 
          "Upper CI" = conf.high, 
          "R-squared", 
-         "p-value" = p.value, 
          "p-value adj.") %>% 
   flextable() %>% 
   colformat_double(digits = 2) %>%
