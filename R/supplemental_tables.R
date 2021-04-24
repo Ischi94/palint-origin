@@ -296,6 +296,7 @@ my_doc <- my_doc %>%
 
 # random effect test ------------------------------------------------------
 
+# load data and make flextable
 rand_eff_test_fxt <- read_csv(here("data/random_effect_test.csv")) %>% 
   flextable() %>% 
   colformat_double(digits = 0) %>% 
@@ -312,6 +313,29 @@ my_doc <- my_doc %>%
   body_add_flextable(rand_eff_test_fxt, pos = "after")
 
 
+
+# cross-correlation -------------------------------------------------------
+
+# load data and render flextable
+pearson_r_fxt <- read_csv(here("data/pearson_r.csv")) %>% 
+  mutate("R-squared" = estimate^2) %>% 
+  select(Data = type, 
+         R = estimate,
+         "Lower CI" = conf.low, 
+         "Upper CI" = conf.high, 
+         "R-squared") %>% 
+  flextable() %>% 
+  colformat_double(digits = 2) %>%
+  theme_booktabs() %>% 
+  autofit() %>% 
+  hline(i = 2,
+        border = officer::fp_border(width = 1, style = "dashed", color = "darkgrey")) %>% 
+  fix_border_issues()
+
+# add to word file
+my_doc <- my_doc %>% 
+  body_add_break() %>% 
+  body_add_flextable(pearson_r_fxt, pos = "after")
 
 # Make word file ----------------------------------------------------------
 
