@@ -28,7 +28,6 @@ cool_data <- all_data %>%
 
 
 
-
 # calculate cross correlation ---------------------------------------------
 
 # for all data
@@ -56,7 +55,8 @@ ccf_cool <- cool_data %>%
 
 
 
-# calculate r squared -----------------------------------------------------
+
+# pearson r at lag one ----------------------------------------------------
 
 
 # all data
@@ -134,7 +134,9 @@ ggsave(correlation_plot, filename = here("figures/correlation_plot.png"))
 
 
 
-# cross-correlation through time ------------------------------------------
+
+# overall cross correlation -----------------------------------------------
+
 
 pearson_r <- list(
   all_data,   # all data
@@ -157,7 +159,7 @@ pearson_r <- list(
 # save data
 # write_csv(pearson_r, here("data/pearson_r.csv"))
 
-pearson_r %>% 
+pearson_r_plot <- pearson_r %>% 
   ggplot(aes(estimate, fct_reorder(type, c(5, 4, 3, 2, 1)), 
              xmin = conf.low, xmax = conf.high)) +
   geom_vline(xintercept = 0, alpha = 0.8,
@@ -168,7 +170,7 @@ pearson_r %>%
        x = "Pearson correlation coefficient") +
   my_theme
 
+ggsave(pearson_r_plot, filename = here("figures/pearson_r_plot.png")) 
 
-pearson_r %>% 
-  mutate(estimate_sq = estimate^2)
+
 
