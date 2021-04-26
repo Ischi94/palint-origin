@@ -340,6 +340,33 @@ my_doc <- my_doc %>%
   body_add_break() %>% 
   body_add_flextable(pearson_r_fxt, pos = "after")
 
+
+
+
+# oxygen isotope test -----------------------------------------------------
+
+# load data and render flextable
+isotope_fxt <- read_csv(here("data/oxygen_isotope_test.csv")) %>% 
+  select(Effect = type, 
+         Estimate = estimate, 
+         "Lower CI" = conf.low, 
+         "Upper CI" = conf.high, 
+         "Isotope data" = isotope_data) %>% 
+  flextable() %>% 
+  colformat_double(digits = 2) %>%
+  theme_booktabs() %>% 
+  merge_v(j = 5) %>% 
+  autofit() %>% 
+  hline(i = 2,
+        border = officer::fp_border(width = 1, style = "dashed", color = "darkgrey")) %>% 
+  fix_border_issues()
+
+# add to word file
+my_doc <- my_doc %>% 
+  body_add_break() %>% 
+  body_add_flextable(isotope_fxt, pos = "after")
+
+
 # Make word file ----------------------------------------------------------
 
 # convert to word file/ add input to empty docx
