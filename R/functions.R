@@ -178,6 +178,20 @@ short_term <- function(i, j) {
 ### 
 
 ###
+# same for temperature
+short_term_temp <- function(i, j) {
+  dum1 <- filter(isotemp,
+                 stg %in% stg[between(stg, i-j, i)])
+  
+  dum2 <-  dum1 %>% 
+    unnest(Temp) %>% 
+    lm(formula = Temp ~ stg)
+  
+  -dum2$coefficients[2]
+}
+### 
+
+###
 # function that calculates the long-term trends for the fragmenation index
 # If we want to investigate the interaction between long term change and short term,
 # we need to exclude the short term bin from the long term, and thus shift the long 
@@ -196,6 +210,21 @@ long_term <- function(i, j) {
 }
 ###
 
+###
+# same for temperatures
+long_term_temp <- function(i, j) {
+  dum1 <- filter(isotemp2,
+                 stg %in% stg[between(stg, i-j, i-1)])
+  
+  if(nrow(dum1) != 0) {
+    dum2 <-  dum1 %>% 
+      unnest(Temp) %>% 
+      lm(formula = Temp ~ stg)
+    
+    -dum2$coefficients[2]
+  } else NA
+}
+###
 
 ### 
 # take a model and produce a Data frame (tibble for nicer printing) with model output
