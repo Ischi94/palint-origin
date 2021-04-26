@@ -4,6 +4,7 @@ library(tidyverse)
 library(here)
 library(lme4)
 library(geiger)
+library(brms)
 
 # load self-defined functions 
 source(here("R/functions.R"))
@@ -212,11 +213,23 @@ cc_pred <- predict(cool_interaction_final, newdata = cc_raw,
                    type = "response")
 
 # make a dataframe with the output
-prob <- tibble(ori.prob = c(cc_pred, wc_pred, cw_pred,ww_pred), 
-               pal.int = c(rep("WW", length(cc_pred)),
+prob_comparison <- tibble(ori.prob = c(cc_pred, wc_pred, cw_pred,ww_pred), 
+               pal.int = c(rep("WW", length(ww_pred)),
                            rep("WC", length(wc_pred)),
                            rep("CW", length(cw_pred)),
-                           rep("CC", length(ww_pred))))
+                           rep("CC", length(cc_pred)))) %>%
+  mutate(
+    # absolute values
+    ori.prob = ori.prob * 100,
+    # combine the rest
+    pal.int = fct_collapse(
+      pal.int,
+      cooling_cooling = "CC",
+      other = c("CW", "WC", "WW")))
+
+
+
+# average response --------------------------------------------------------
 
 
 # the predictions are now in percentage (probability), but the intercept, to which we 
@@ -234,52 +247,82 @@ prob_cool <- odds / (1 + odds)
 av <- (prob_cool + prob_warm)/2
 
 
-# visualize ---------------------------------------------------------------
+# bayesian estimation -----------------------------------------------------
 
-ggplot(prob, aes(x=pal.int, y=ori.prob, fill=pal.int)) + 
-  geom_hline(yintercept = av)+
-  geom_violin() +
-  scale_fill_manual(values = c("#354E71", "#354E71","#841F27", "#841F27"))+
-  scale_y_continuous(name = "Origination Probability", limits=c(0, 0.3), 
-                     breaks = seq(0, 0.3, by= 0.05), 
-                     labels = scales::percent_format(accuracy = 1)) +
-  xlab(NULL) +
-  my_theme +
-  theme(legend.position = "none", 
-        axis.ticks.length.x.bottom = unit(0.25, "cm")) +
-  # add half a violin to visualise palaeoclimate interactions
-  ggnewscale::new_scale_fill() +
-  see::geom_violinhalf(data = filter(prob, pal.int == "CW" | pal.int == "WC"), 
-                       aes(colour = pal.int, fill = pal.int)) +
-  scale_fill_manual(values = c("#841F27", "#354E71")) +
-  scale_colour_manual(values=c("#841F27", "#354E71")) +
-  # add grey lines to visualise medians per group 
-  stat_summary(fun = median, fun.min = median, fun.max = median,
-               geom = "crossbar", width = c(0.915, 0.35, 0.53, 0.42), 
-               colour = "grey60") +
-  # add outer layer
-  geom_violin(fill = NA) +
-  # add arrows
-  annotate(geom = "curve", x = 4, y = 0.22,  # overall
-           xend = 4.45, yend = 0.138, 
-           curvature = -.325, arrow = arrow(length = unit(2.5, "mm")), 
-           colour = "grey40") +
-  annotate(geom = "curve", x = 1.25, y = 0.055, # per group
-           xend = 0.68, yend = 0.13, 
-           curvature = -.5, arrow = arrow(length = unit(2.5, "mm")), 
-           colour = "grey40") +
-  # add lines
-  annotate(geom = "segment", x = c(4, 1.25), y = c(0.22, 0.055), # overall
-           xend = c(4.55, 0.575), yend = c(0.22, 0.055), colour = "grey40") +
-  # add background box
-  annotate(geom = "rect", xmin = 4, xmax = 4.5, # overall
-           ymin = 0.235, ymax = 0.26, fill = "white") +
-  # add text
-  annotate(geom = "text", x = 4.275, y = c(0.25, 0.235), # overall
-           colour = "grey30", label = c("Overall", "median"), size = 3.5) +
-  annotate(geom = "text", x = 0.9, y = c(0.045, 0.03, 0.015), # per group
-           colour = "grey30", label = c("Median", "per", "group"), size = 3.5) +
-  scale_x_discrete(labels = c("Cooling-Cooling", "Cooling-Warming", 
-                              "Warming-Cooling", "Warming-Warming"), 
-                   guide = guide_axis(n.dodge=2))
+# set monte carlo parameters
+CHAINS <- 4
+ITER <- 1000
+WARMUP <- 500
+BAYES_SEED <- 1234
+options(mc.cores = parallel::detectCores())  # Use all cores
 
+# run the model usin brms and rcpp
+brms_best <- brm(
+  # we suppress the intercept by setting ori.prob ~ 0 + pal.int, 
+  # brms returns coefficients for each of the groups, 
+  # and these coefficients represent group means.
+  bf(ori.prob ~ 0 + pal.int, sigma ~ 0 + pal.int), 
+  family = student,
+  data = prob_comparison,
+  prior = c(
+    # Set group mean prior as visualized above
+    # these are fairly informative prior capturing realistic expectations
+    set_prior("normal(15, 30)", class = "b", lb = 0, ub = 100),
+    # Set group variance prior using cauchy(0, 1)
+    set_prior("cauchy(0, 1)", class = "b", dpar = "sigma"),
+    set_prior("exponential(1.0/29)", class = "nu")),
+  chains = CHAINS, iter = ITER, warmup = WARMUP, seed = BAYES_SEED)
+
+
+# extract the posterior samples for each of the groups, subtract them from each other,
+# and then calculate the credible interval
+brms_best_post <- posterior_samples(brms_best) %>% 
+  # Rescale sigmas (sigma terms are on a log scale, 
+  # so we need to exponentiate them back to the scale of the data)
+  mutate_at(vars(contains("sigma")), exp) %>% 
+  # we need to log nu
+  mutate(nu = log10(nu)) %>% 
+  # calculate differences
+  mutate(diff_medians = b_pal.intcooling_cooling - b_pal.intother,
+         diff_sigma = b_sigma_pal.intcooling_cooling - b_sigma_pal.intother)
+
+
+# we can use tidyMCMC from broom to calculate the difference and 
+# create confidence intervals
+brms_best_tidy <- 
+  broom::tidy(brms_best_post, conf.int = TRUE, conf.level = 0.89, 
+              estimate.method = "median", conf.method = "HPDinterval")
+
+# calculate effect
+best_results <- brms_best_tidy %>% 
+  filter(column == "diff_medians") %>% 
+  transmute(estimate = median, conf.low = min, conf.high = max) %>% 
+  # percentage change
+  mutate(across(everything(), 
+                ~./(av*100)*100, 
+                .names = "{col}.perc")) %>% 
+  pivot_longer(cols = everything()) %>% 
+  add_column(type = rep(c("Difference in medians", 
+                          "Percentage Change"), each = 3)) %>% 
+  mutate(name = rep(c("estimate", "conf.low", "conf.high"), 2)) %>% 
+  pivot_wider(names_from = "name") %>% 
+  add_column(isotope_data = "Song et al. 2019")
+
+
+
+# compare results ---------------------------------------------------------
+
+# load data fitted with Veizer and Prokoph isotope data
+load(here("data/effect_plot_data.RData"))
+
+# bring results in similar format
+actual_results <- effect_plot_data %>% 
+  map_dfr(filter, method == "best") %>%  
+  mutate(type = c("Difference in medians", "Percentage Change")) %>% 
+  add_column(isotope_data = "Veizer & Prokoph 2015")
+
+# merge data
+best_results %>% 
+  full_join(actual_results) %>% 
+  select(-method) %>% 
+  write_csv(here("data/oxygen_isotope_test.csv"))
