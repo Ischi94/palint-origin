@@ -331,6 +331,32 @@ cor_test_r <- function(.data) {
 ###
 
 ###
+# separate sqs data into temporal groups
+separate_groups <- function(time_interval) {
+  datsqs %>%
+    filter(stg %in% time_interval) %>% 
+    full_join(log_odds) %>% 
+    drop_na() %>% 
+    mutate(weighted_estimate = n*estimate) %>% 
+    summarise(mean_w_est = mean(weighted_estimate, na.rm = TRUE), 
+              sd_est = sd(weighted_estimate, na.rm = TRUE), 
+              sum_n = sum(n, na.rm = TRUE)) %>% 
+    transmute(estimate = mean_w_est/sum_n, 
+              sd_est = sd_est/sum_n)
+}
+
+###
+
+### 
+# scale/ normalize column between 0 and 1
+range_scale <- function(col_name) {
+  (col_name - min(col_name)) /
+    (max(col_name) - min(col_name))
+}
+
+###
+
+###
 # custom ggplot theme
 # define theme
 my_theme <- theme(panel.background = element_rect(fill = "white", colour = "grey50"),
