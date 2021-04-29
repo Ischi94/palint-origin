@@ -41,10 +41,10 @@ source(here("R/functions.R"))
 
 # Per phyla ---------------------------------------------------------------
 
-phyla <- c("Annelida", "Arthropoda", 
-  "Brachiopoda", "Bryozoa", "Chordata", 
-  "Cnidaria", "Echinodermata", "Hemichordata", 
-  "Mollusca", "Porifera")
+phyla <- datsqs %>% 
+  count(phylum) %>% 
+  filter(n >= 50) %>% 
+  pull(phylum)
 
 # preallocate empty list
 metrics <- vector("list", length = length(phyla))
@@ -230,7 +230,7 @@ observations <- datsqs %>%
 # define colours
 my_colours <- c(wesanderson::wes_palettes$Darjeeling1, 
                 wesanderson::wes_palettes$Moonrise2,
-                wesanderson::wes_palettes$GrandBudapest1[1:2])
+                wesanderson::wes_palettes$GrandBudapest1[1:3])
 
 stage_observations <- datsqs %>% 
   count(phylum, stg) %>% 
@@ -255,7 +255,7 @@ prop_observations <- datsqs %>%
   ggplot() +
   geom_col(aes(stg, n, fill = phylum), position = "fill") +
   my_theme +
-  labs(x = "Geologic stages", y = "Percentage of observations") +
+  labs(x = "Geologic stages", y = "Proportional observations") +
   scale_fill_manual(values = my_colours, guide = guide_legend(nrow = 2), 
                     name = NULL) +
   scale_x_continuous(breaks = seq(15, 95, by = 5))
