@@ -25,6 +25,27 @@ datsqs <- as_tibble(datsqs) %>%
   rename(name = phylum)
 
 
+# changes through time ----------------------------------------------------
+
+datsqs %>% 
+  full_join(log_odds) %>% 
+  drop_na() %>% 
+  mutate(weighted_estimate = n*estimate) %>% 
+  group_by(name, stg) %>% 
+  summarise(est = mean(weighted_estimate, na.rm = TRUE)) %>% 
+  mutate(log_odds = (est - min(est)) / (max(est) - min(est))) %>% 
+  full_join(log_odds) %>% 
+  drop_na(stg) %>% 
+  ggplot(aes(stg, fct_reorder(name, estimate), fill = log_odds)) +
+  geom_tile() +
+  labs(fill = "Log-odds [std]", x = "age [myr]", 
+       y = NULL) +
+  scale_x_continuous(breaks = c(25, 42, 59, 75, 95),
+                     labels = c(400, 300, 200, 100, 0)) +
+  scale_fill_viridis_c(option = "B") +
+  my_theme +
+  theme(panel.grid.major.x = element_blank())
+
 
 # calculate weighted log odds ---------------------------------------------
 
