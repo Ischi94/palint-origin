@@ -2,6 +2,7 @@
 library(tidyverse) # for visualization
 library(here) # for clean file storage
 library(divDyn) # for origination rate calculation
+library(patchwork) # for combination of plots
 
 # load custom functions
 source(here("R/functions.R"))
@@ -60,19 +61,23 @@ period <- log_odds[12:16,] %>%  # select stages
 # visualize ---------------------------------------------------------------
 
 # comparison
-tibble(y = taxa$estimate, 
-       ymin = taxa$lower_CI, 
-       ymax = taxa$upper_CI, 
-       x = period$estimate, 
-       xmin = period$lower_CI, 
-       xmax = period$upper_CI, 
+dat_comp <- tibble(x = taxa$estimate, 
+       xmin = taxa$lower_CI, 
+       xmax = taxa$upper_CI, 
+       y = period$estimate, 
+       ymin = period$lower_CI, 
+       ymax = period$upper_CI, 
        period = c(
          "Tremadocian - Lochkovian",
          "Pragian - Artinskian", 
          "Kungurian - Pliensbachian",
          "Toarcian - Turonian",
          "Coniacian - Pleistocene"
-       )) %>% 
+       )) 
+
+
+# visualize
+dat_comp_plot <- dat_comp %>% 
   ggplot(aes(x = x, y = y)) +
   geom_abline(slope = 1, intercept = 0, 
               linetype = "dashed") +
@@ -82,32 +87,37 @@ tibble(y = taxa$estimate,
                   size = 0.8, colour = "grey20") +
   geom_point(size = 2, colour = "white") +
   geom_label(aes(label = period),
-             nudge_y = 0.1) +
-  labs(y = "Log-odds of taxa per period [std]", 
-       x = "Log-odds per period [std]") +
-  scale_x_continuous(breaks = seq(0, 1, 0.2), 
-                     limits = c(0, 1.05)) +
+             nudge_y = 0.13, 
+             nudge_x = c(-0.04, 0, 0, 0, 0.03)) +
+  labs(x = "Log-odds of taxa per period [std]", 
+       y = "Log-odds per period [std]") +
+  scale_x_continuous(breaks = seq(0, 1, 0.2)) +
   scale_y_continuous(breaks = seq(0, 1, 0.2)) +
   my_theme +
   theme(panel.grid.major.x = element_blank())
 
-# absolute differece
-tibble(y = taxa$estimate, 
-       ymin = taxa$lower_CI, 
-       ymax = taxa$upper_CI, 
-       x = period$estimate, 
-       xmin = period$lower_CI, 
-       xmax = period$upper_CI, 
-       period = c(
-         "Tremadocian - Lochkovian",
-         "Pragian - Artinskian", 
-         "Kungurian - Pliensbachian",
-         "Toarcian - Turonian",
-         "Coniacian - Pleistocene"
-       )) %>% 
+
+
+
+# calculate absolute difference
+dat_diff <- dat_comp %>% 
   mutate(diff_est = abs(y - x)) %>% 
   select(period, diff_est) %>% 
-  bind_cols(log_odds[12:16,]) %>% 
+  bind_cols(log_odds[12:16,])
+
+# calculate correlation coefficient
+diff_r <- cor.test(dat_diff$diff_est, dat_diff$estimate) %>% 
+  broom::tidy() %>% 
+  mutate(across(c(estimate, conf.low, conf.high), ~round(.x, 2)))
+
+diff_r <- paste0(
+  "r = ",
+  diff_r$estimate, " [",
+  diff_r$conf.low, ", ", 
+  diff_r$conf.high, "]")
+
+# visualize
+dat_diff_plot <- dat_diff %>% 
   ggplot(aes(x = estimate, y = diff_est)) +
   geom_smooth(method = "lm", 
               colour = "#354E71", 
@@ -116,9 +126,19 @@ tibble(y = taxa$estimate,
   geom_point(size = 4.5, colour = "grey20") +
   geom_point(size = 2.8, colour = "white") +
   geom_label(aes(label = period),
-             nudge_y = 0.03, 
-             nudge_x = c(-0.33, 0.25, 0, 0, 0)) +
+             nudge_y = 0.08, 
+             nudge_x = c(-0.25, 0.2, 0, 0, -0.1)) +
+  annotate("text", x = 3.2, y = 0.58,
+           label = diff_r, size = 4) +
   labs(y = "Absolute difference", 
-       x = "Log-odds per period") +
+       x = "Log Odds ratio \n (Origination | Cooling-Cooling)") +
   my_theme +
   theme(panel.grid.major.x = element_blank())
+
+log_odds_explained <- dat_comp_plot / dat_diff_plot + 
+  plot_annotation(tag_levels = 'A')
+
+
+# save
+ggsave(log_odds_explained, filename = here("figures/log_odds_by_taxa.png"))  
+
