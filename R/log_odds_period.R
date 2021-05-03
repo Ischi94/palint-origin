@@ -27,7 +27,7 @@ datsqs <- as_tibble(datsqs) %>%
 
 # changes through time ----------------------------------------------------
 
-datsqs %>% 
+log_odds_changes <- datsqs %>% 
   full_join(log_odds) %>% 
   drop_na() %>% 
   mutate(weighted_estimate = n*estimate) %>% 
@@ -44,8 +44,11 @@ datsqs %>%
                      labels = c(400, 300, 200, 100, 0)) +
   scale_fill_viridis_c(option = "B") +
   my_theme +
-  theme(panel.grid.major.x = element_blank())
+  theme(panel.grid.major.x = element_blank(), 
+        panel.background = element_rect(fill = "grey85"))
 
+
+ggsave(plot = log_odds_changes, filename = here("figures/log_odds_changes.png"))
 
 # calculate weighted log odds ---------------------------------------------
 
