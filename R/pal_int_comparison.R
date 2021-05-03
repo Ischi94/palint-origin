@@ -417,7 +417,7 @@ treatment <- filter(prob_comparison, pal.int == "cooling_cooling") %>% pull(ori.
 control <- filter(prob_comparison, pal.int == "other") %>% pull(ori.prob)
 
 # cohens d
-effsize_raw <- effsize::cohen.d(treatment, control)
+effsize_raw <- cohen.d(treatment, control)
 
   
 # the bayesian way
