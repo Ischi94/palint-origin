@@ -10,17 +10,37 @@ badge](https://img.shields.io/badge/Status-In_Revision-blue.svg)](https://shield
 <!-- badges: end -->
 
 This the R project to the second (potential) publication for PastKey
-covering paleoclimate interactions and origination probability.
+covering paleoclimate interactions and origination probability. This
+repository contains all data files and code to reproduce results. All
+figures are made with `ggplot` and can be therefore reproduced with this
+repository as well. The raw fossil occurrence data set downloaded from
+the Paleoiology Database is unfortunately too large for this repository
+but is publically available on our [Figshare.com
+archive](https://figshare.com/articles/dataset/Raw_fossil_data/14528925).
 
-# Order of scripts
+# File structure
 
-1.  Data\_preparation.R  
-2.  model\_comparison.R  
-3.  pal\_int\_comparison.R  
-4.  log\_odds\_phyla.R  
-5.  cont\_fragmentation.R
-6.  supplemental\_plots.R  
-7.  supplemental\_tables.R
+Throughout our analysis, we use the `here` package to structure our data
+files, which is based on the root directory of the *Rproj* file. We
+recommend to either download the entire project or to fork the
+repository to keep the directories tidy. If done so, it is not needed to
+set working directories manually. All files will work correctly without
+changing anything in the code. Every folder contains a README with
+further instructions and explanations on individual files.
+
+## R
+
+This folder contains all R code as scripts.
+
+## data
+
+This folder contains both raw and processed files, as well as results
+saved as *RData* or *csv* files.
+
+## figures
+
+This folder contains all figures from the main text and the
+supplementary information file, as well as supplementary tables.
 
 # Version info
 
