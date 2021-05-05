@@ -47,6 +47,8 @@ This folder contains all figures from the main text and the supplementary inform
   
 # Version info  
   
+Information about the operating system used to run the analysis and all R packages including their dependencies and version info used throughout the R-scripts:  
+  
 ```{r}
 sessionInfo()
 ```

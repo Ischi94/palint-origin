@@ -44,6 +44,10 @@ supplementary information file, as well as supplementary tables.
 
 # Version info
 
+Information about the operating system used to run the analysis and all
+R packages including their dependencies and version info used throughout
+the R-scripts:
+
 ``` r
 sessionInfo()
 ```
