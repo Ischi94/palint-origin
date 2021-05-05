@@ -10,7 +10,7 @@
     processed and cleaned fossil occurrence data  
 
 -   continental_fragmentation_data.RData  
-    The continental fragmentation index directly accessed from the [accompanying github repo of Zaffos et al.](accompanying GitHub repository (https://github.com/UW-Macrostrat/PNAS_201702297) and saved as a R file    
+    The continental fragmentation index directly accessed from the [accompanying github repo of Zaffos et al.](https://github.com/UW-Macrostrat/PNAS_201702297) and saved as a R file    
 
 -   effect_plot_data.RData  
     Data used to produce the main figure 2  
