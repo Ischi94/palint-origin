@@ -387,7 +387,8 @@ model_comparison_grouped <- model_comparison %>%
         legend.box.background = element_rect(fill = "white", colour = "grey50"),
         legend.key = element_blank(),
         legend.title = element_text(size = 10), 
-        legend.text = element_text(size = 8)
+        legend.text = element_text(size = 8), 
+        axis.ticks.y = element_blank()
   )
   
 
