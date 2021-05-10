@@ -504,14 +504,18 @@ cohens_d <- ggplot(effect_size, aes(x = estimate, y = method)) +
                       guide = guide_legend(reverse = TRUE)) 
 
 # arrange plot and annotate
-combined_effect_size <- median_diff / perc_change / cohens_d + 
+combined_effect_size <- (median_diff + guides(colour = "none")) / 
+  (perc_change + guides(colour = "none")) / 
+  cohens_d + 
   plot_annotation(tag_levels = 'A') +
   plot_layout(guides = 'collect') &
   theme(panel.grid.major.x=element_line(colour = "grey", linetype = "dotted"), 
         panel.grid.major.y = element_blank(), 
         panel.grid.minor.x = element_blank(), 
         legend.key = element_blank(), 
-        legend.position = "bottom")
+        legend.position = "bottom", 
+        legend.text = element_text(size = 6), 
+        legend.key.size = unit(1,"line"))
 
 # save it
 ggsave(plot = combined_effect_size, filename = here("figures/combined_effect_sizes.png"), 
