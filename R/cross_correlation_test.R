@@ -2,6 +2,7 @@ library(tidyverse)
 library(here)
 library(broom)
 
+# load in custom functions
 source(here("R/functions.R"))
 
 # load data ---------------------------------------------------------------
@@ -138,8 +139,9 @@ ggsave(correlation_plot, filename = here("figures/correlation_plot.png"))
 # overall cross correlation -----------------------------------------------
 
 
-pearson_r <- list(
-  all_data,   # all data
+# get subsets of data
+dat_subset <- list(
+  all_data, # all data
   cool_data, # cool data only
   all_data %>%
     filter(stg <= 51), # Paleozoic
@@ -147,7 +149,11 @@ pearson_r <- list(
     filter(stg > 51 & stg < 82), # Mesozoic
   all_data %>%
     filter(stg >= 82) # Cenozoic
-  ) %>% 
+) 
+
+# cross-correlation between detrended temperature and detrended continental
+# fragmentation index
+pearson_r <- dat_subset %>% 
   map_dfr(cor_test_r) %>% 
   add_column(.before = "estimate", 
              type = c("All Data", 
@@ -156,9 +162,26 @@ pearson_r <- list(
                       "Mesozoic", 
                       "Cenozoic"))
 
+# check for auto-correllation in residuals
+pearson_r <- dat_subset %>% 
+  map_dfr(~ lmtest::dwtest(diff(.x$temp) ~ diff(.x$fragmentation_index)) %>% 
+            tidy() %>% 
+            select(statistic, p.value)) %>% 
+  add_column(.before = "statistic", 
+             type = c("All Data", 
+                      "Cool subset", 
+                      "Paleozoic", 
+                      "Mesozoic", 
+                      "Cenozoic")) %>% 
+  rename(DW_p_value = p.value) %>% 
+  full_join(pearson_r) %>% 
+  select(type, estimate, conf.low,
+         conf.high, statistic, DW_p_value)
+
 # save data
 # write_csv(pearson_r, here("data/pearson_r.csv"))
 
+# visualize autocorrelation
 pearson_r_plot <- pearson_r %>% 
   ggplot(aes(estimate, fct_reorder(type, c(5, 4, 3, 2, 1)), 
              xmin = conf.low, xmax = conf.high)) +

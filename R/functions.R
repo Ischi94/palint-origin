@@ -322,9 +322,11 @@ cross_corr_ci <- function(n.used) {
 
 ###
 
-### calculate pearsons r correlation and return a tibble
+### 
+# calculate pearsons r correlation on first differences
+# and return a tibble
 cor_test_r <- function(.data) {
-  cor.test(.data$temp, .data$fragmentation_index) %>% 
+  cor.test(diff(.data$temp), diff(.data$fragmentation_index)) %>% 
     tidy() %>% 
     select(estimate, conf.low, conf.high, p.value)
 }
