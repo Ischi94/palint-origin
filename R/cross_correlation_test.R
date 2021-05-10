@@ -61,7 +61,7 @@ ccf_cool <- cool_data %>%
 
 
 # all data
-corr_all <- cor.test(all_data$temp, all_data$fragmentation_index, 
+corr_all <- cor.test(diff(all_data$temp), diff(all_data$fragmentation_index), 
            alternative = "two.sided", 
            method = "pearson") %>% 
   tidy() %>% 
@@ -79,7 +79,7 @@ corr_all <- cor.test(all_data$temp, all_data$fragmentation_index,
   pull()
 
 # cool data
-corr_cool <- cor.test(cool_data$temp, cool_data$fragmentation_index, 
+corr_cool <- cor.test(diff(cool_data$temp), diff(cool_data$fragmentation_index), 
                      alternative = "two.sided", 
                      method = "pearson") %>% 
   tidy() %>% 

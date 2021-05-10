@@ -309,7 +309,7 @@ my_wilcoxtest <- function(PI, alternative) {
 ###
 # calculate the cross correlation without plottting and in a tidy way
 cross_corr <- function(.data) {
-  ccf(.data$temp, .data$fragmentation_index, 
+  ccf(diff(.data$temp), diff(.data$fragmentation_index), 
       plot = FALSE, lag.max = 10)
 }
 ###
