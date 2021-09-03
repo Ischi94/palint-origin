@@ -22,7 +22,7 @@ library(effsize)
 # Paleoclimate Interaction Origination
 
 <!-- badges: start -->
-[![Generic badge](https://img.shields.io/badge/Status-In_Revision-blue.svg)](https://shields.io/)
+[![Generic badge](https://img.shields.io/badge/Status-Published-green.svg)](https://shields.io/)
 <!-- badges: end -->
 
 This the R project to the second (potential) publication for PastKey covering paleoclimate interactions and origination probability. This repository contains all data files and code to reproduce results. All figures are made with `ggplot` and can be therefore reproduced with this repository as well. The raw fossil occurrence data set downloaded from the Paleoiology Database is unfortunately too large for this repository but is publically available on our [Figshare.com archive](https://figshare.com/articles/dataset/Raw_fossil_data/14528925).   
