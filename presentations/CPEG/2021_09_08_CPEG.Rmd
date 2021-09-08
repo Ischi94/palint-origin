@@ -121,51 +121,19 @@ xaringanExtra::use_animate_css()
 ---
 ## Paleoclimate Interaction
 
-```{r temperature data, echo= FALSE}
-temp_dat <- tibble(x = 1:100, y = c(1:70, 71:42)) %>% 
-  mutate(x = rnorm(x, x, 2), 
-         y = rnorm(y, y, 2)) %>% 
-  add_column(col_group = c(rep("Long-term Trend", 70),
-                           rep("Short-term Change", 30)))
-```
-
 .center[
-```{r paleoclimate interaction plot 1, echo=FALSE, fig.width=12}
-temp_dat %>% 
-  ggplot(aes(x, y)) +
-  geom_point() +
-  labs(x = "Time", y = "Temperature") +
-  scale_x_continuous(breaks = NULL) +
-  scale_y_continuous(breaks = NULL) +
-  theme_minimal(base_size = 20) +
-  theme()
-```  
-]  
+<img src="img/raw_temp.png" alt="main figure 2" width = 650/>
+] 
+
+
 
 ---
 class: animated fadeIn
 ## Paleoclimate Interaction
 
 .center[
-```{r paleoclimate interaction plot 2, echo=FALSE, message=FALSE, fig.width=12}
-temp_dat %>% 
-  ggplot(aes(x, y)) +
-  geom_point() +
-  geom_smooth(aes(colour = col_group), 
-              se = FALSE, 
-              method = "lm") +
-  ggforce::geom_mark_ellipse(aes(label = col_group, 
-                                 colour = col_group), 
-                             label.fontsize = 20, 
-                             label.colour = "grey20") +
-  labs(x = "Time", y = "Temperature") +
-  scale_color_manual(values = c("#841F27", "#354E71")) +
-  scale_x_continuous(breaks = NULL) +
-  scale_y_continuous(breaks = NULL) +
-  theme_minimal(base_size = 20) +
-  theme(legend.position = "none")
-```  
-]
+<img src="img/proc_temp.png" alt="main figure 2" width = 650/>
+] 
 
 ---
 
@@ -235,99 +203,13 @@ Extinction &#8594; High Impact<sup>2</sup>
 ---
 ### Origination response
 
-```{r origination responce, echo=FALSE, fig.width=10}
-load("data/violin_plot_data.RData")
-
-av <- 0.13
-
-ggplot(prob, aes(x=pal.int, y=ori.prob, fill=pal.int)) + 
-  geom_hline(yintercept = av)+
-  geom_violin(fill = NA, colour = NA) +
-  scale_y_continuous(name = "Origination Probability", limits=c(0, 0.3), 
-                     breaks = seq(0, 0.3, by= 0.05), 
-                     labels = scales::percent_format(accuracy = 1)) +
-  xlab(NULL) +
-  theme_minimal() +
-  theme(legend.position = "none", 
-        axis.ticks.length.x.bottom = unit(0.25, "cm"), 
-        axis.title = element_text(size = 15), 
-        axis.text = element_text(size = 15)) +
-  # add arrows
-  annotate(geom = "curve", x = 4, y = 0.22,  # overall
-           xend = 4.45, yend = 0.138, 
-           curvature = -.325, arrow = arrow(length = unit(2.5, "mm")), 
-           colour = "grey40") +
-  # add lines
-  annotate(geom = "segment", x = 4, y = 0.22, # overall
-           xend = 4.55, yend = 0.22, colour = "grey40") +
-  # add background box
-  annotate(geom = "rect", xmin = 4, xmax = 4.5, # overall
-           ymin = 0.235, ymax = 0.26, fill = "white") +
-  # add text
-  annotate(geom = "text", x = 4.275, y = c(0.25, 0.235), # overall
-           colour = "grey30", label = c("Overall", "median"), size = 4.5) +
-  scale_x_discrete(labels = c("Cooling-Cooling", "Cooling-Warming", 
-                              "Warming-Cooling", "Warming-Warming"), 
-                   guide = guide_axis(n.dodge=2))
-
-```
+<img src="img/raw_ori.png" alt="main figure 2" width = 680/>
 
 ---
 class: animated fadeIn
 ### Origination response
 
-```{r origination responce full, echo=FALSE, fig.width=10}
-ggplot(prob, aes(x=pal.int, y=ori.prob, fill=pal.int)) + 
-  geom_hline(yintercept = av)+
-  geom_violin() +
-  scale_fill_manual(values = c("#354E71", "#354E71","#841F27", "#841F27"))+
-  scale_y_continuous(name = "Origination Probability", limits=c(0, 0.3), 
-                     breaks = seq(0, 0.3, by= 0.05), 
-                     labels = scales::percent_format(accuracy = 1)) +
-  xlab(NULL) +
-  theme_minimal() +
-  theme(legend.position = "none", 
-        axis.ticks.length.x.bottom = unit(0.25, "cm"), 
-        axis.title = element_text(size = 15), 
-        axis.text = element_text(size = 15)) +
-  # add half a violin to visualise palaeoclimate interactions
-  ggnewscale::new_scale_fill() +
-  see::geom_violinhalf(data = filter(prob, pal.int == "CW" | pal.int == "WC"), 
-                       aes(colour = pal.int, fill = pal.int)) +
-  scale_fill_manual(values = c("#841F27", "#354E71")) +
-  scale_colour_manual(values=c("#841F27", "#354E71")) +
-  # add grey lines to visualise medians per group 
-  stat_summary(fun = median, fun.min = median, fun.max = median,
-               geom = "crossbar", width = c(0.915, 0.35, 0.53, 0.42), 
-               colour = "grey60") +
-  # add outer layer
-  geom_violin(fill = NA) +
-  # add arrows
-  annotate(geom = "curve", x = 4, y = 0.22,  # overall
-           xend = 4.45, yend = 0.138, 
-           curvature = -.325, arrow = arrow(length = unit(2.5, "mm")), 
-           colour = "grey40") +
-  annotate(geom = "curve", x = 1.25, y = 0.055, # per group
-           xend = 0.68, yend = 0.146, 
-           curvature = -.5, arrow = arrow(length = unit(2.5, "mm")), 
-           colour = "grey40") +
-  # add lines
-  annotate(geom = "segment", x = c(4, 1.25), y = c(0.22, 0.055), # overall
-           xend = c(4.55, 0.575), yend = c(0.22, 0.055), colour = "grey40") +
-  # add background box
-  annotate(geom = "rect", xmin = 4, xmax = 4.5, # overall
-           ymin = 0.235, ymax = 0.26, fill = "white") +
-  # add text
-  annotate(geom = "text", x = 4.275, y = c(0.25, 0.235), # overall
-           colour = "grey30", label = c("Overall", "median"), size = 4.5) +
-  annotate(geom = "text", x = 0.9, y = c(0.045, 0.03, 0.015), # per group
-           colour = "grey30", label = c("Median", "per", "group"), size = 4.5) +
-  scale_x_discrete(labels = c("Cooling-Cooling", "Cooling-Warming", 
-                              "Warming-Cooling", "Warming-Warming"), 
-                   guide = guide_axis(n.dodge=2))
-
-```
-
+<img src="img/proc_ori.png" alt="main figure 2" width = 680/>
 
 ---
 class: animated slideInLeft
@@ -355,79 +237,15 @@ class: animated fadeIn
 
 ---
 ### Effect per group
-```{r log odds empty, echo=FALSE, fig.width=10, warning=FALSE}
-load("data/log_odds_impr.RData")
 
-log_odds_impr %>% 
-  # reorder labels
-  mutate(name = as_factor(name)) %>% 
-  mutate(name = fct_reorder(name, desc(name))) %>% 
-  ggplot(aes(x = estimate, y = name)) +
-  geom_vline(xintercept = 0, colour = "darkred") +
-  geom_point(aes(fill = type), size = 2, shape = 21, stroke = 0.5, colour = NA, fill = NA ) +
-  theme(panel.background = element_rect(fill = "white", colour = "grey50"),
-        panel.grid.major.x=element_line(colour = "grey", linetype = "dotted"),
-        text = element_text(family = "sans"), 
-        legend.position = "none", 
-        panel.grid.major.y = element_blank(), 
-        panel.grid.minor.x = element_blank(), 
-        axis.title = element_text(size = 15), 
-        axis.text = element_text(size = 15)) + 
-  labs(x= "Log Odds ratio \n (Origination | Cooling-Cooling)", y = NULL)+
-  scale_x_continuous(breaks = seq(0, 4, by = 1)) +
-  # add annotations
-  # box
-  annotate(geom = "rect", xmin = 0.4, xmax = 1.65, 
-           ymin = - 0.6, ymax = 0.4, fill = "white") +
-  # text
-  annotate(geom = "text", x = 0.9, y = -0.1,
-           colour = "grey30", label = "increasing likelihood", size = 4.5) +
-  # arrow
-  annotate(geom = "segment", x = 1.45, y = -0.1,  
-           xend = 1.7, yend = -0.1, arrow = arrow(length = unit(2, "mm")), 
-           colour = "grey40", size = 0.35) +
-  coord_cartesian(xlim = c(0, 4), ylim = c(-0.05, 14)) +
-  scale_fill_manual(values = c("grey40", "#d5a069", "indianred"))
-```
+<img src="img/raw_eff.png" alt="main figure 2" width = 680/>
 
 ---
 class: animated fadeIn
 ### Effect per group
-```{r log odds full, echo=FALSE, fig.width=10, warning=FALSE}
-log_odds_impr %>% 
-  # reorder labels
-  mutate(name = as_factor(name)) %>% 
-  mutate(name = fct_reorder(name, desc(name))) %>% 
-  ggplot(aes(x = estimate, y = name)) +
-  geom_linerange(aes(xmin = lower_CI, xmax = upper_CI)) +
-  geom_vline(xintercept = 0, colour = "darkred") +
-  geom_linerange(aes(xmin = lower_CI, xmax = upper_CI),
-                 size = 1, colour = "grey45") +
-  geom_point(aes(fill = type), size = 4, shape = 21, stroke = 0.5, colour = "grey25" ) +
-  theme(panel.background = element_rect(fill = "white", colour = "grey50"),
-        panel.grid.major.x=element_line(colour = "grey", linetype = "dotted"),
-        text = element_text(family = "sans"), 
-        legend.position = "none", 
-        panel.grid.major.y = element_blank(), 
-        panel.grid.minor.x = element_blank(), 
-        axis.title = element_text(size = 15), 
-        axis.text = element_text(size = 15)) + 
-  labs(x= "Log Odds ratio \n (Origination | Cooling-Cooling)", y = NULL)+
-  scale_x_continuous(breaks = seq(0, 4, by = 1)) +
-  # add annotations
-  # box
-  annotate(geom = "rect", xmin = 0.4, xmax = 1.65, 
-           ymin = - 0.6, ymax = 0.4, fill = "white") +
-  # text
-  annotate(geom = "text", x = 0.9, y = -0.1,
-           colour = "grey30", label = "increasing likelihood", size = 4.5) +
-  # arrow
-  annotate(geom = "segment", x = 1.45, y = -0.1,  
-           xend = 1.7, yend = -0.1, arrow = arrow(length = unit(2, "mm")), 
-           colour = "grey40", size = 0.35) +
-  coord_cartesian(xlim = c(0, 4), ylim = c(-0.05, 14)) +
-  scale_fill_manual(values = c("grey40", "#d5a069", "indianred"))
-```
+
+<img src="img/proc_eff.png" alt="main figure 2" width = 680/>
+
 ---
 class: bg_karl
 ### Summary
